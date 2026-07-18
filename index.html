@@ -472,11 +472,17 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
         <button class="chip polka-shape-chip" data-v="square">■</button>
         <button class="chip polka-shape-chip" data-v="drop">💧</button>
       </div>
+      <div class="chip-row chip-row-wrap">
+        <button class="chip polka-layout-chip active" data-v="full">Full canvas</button>
+        <button class="chip polka-layout-chip" data-v="border">Border (4 sides)</button>
+      </div>
+      <div class="row" id="polkaMarginRow" style="display:none;"><label class="small">Border margin</label><input type="range" id="polkaMargin" min="0" max="40" value="6"><span class="range-val" id="polkaMarginVal">6</span></div>
       <div class="row"><label class="small">Color</label><input type="color" id="polkaColor" value="#22d9ff"></div>
       <div class="row"><label class="small">Size</label><input type="range" id="polkaSize" min="3" max="30" value="8"><span class="range-val" id="polkaSizeVal">8</span></div>
       <div class="row"><label class="small">Spacing</label><input type="range" id="polkaSpace" min="14" max="60" value="26"><span class="range-val" id="polkaSpaceVal">26</span></div>
       <div class="row"><label class="small">Opacity</label><input type="range" id="polkaOpacity" min="10" max="100" value="60"><span class="range-val" id="polkaOpacityVal">60</span></div>
     </div>
+
 
     <div class="subpanel" id="s1d">
       <div class="section-title">Motion — applies instantly</div>
@@ -929,6 +935,18 @@ document.querySelectorAll('.polka-shape-chip').forEach(c=>{
     renderPolka();
   };
 });
+document.querySelectorAll('.polka-layout-chip').forEach(c=>{
+  c.onclick=()=>{
+    document.querySelectorAll('.polka-layout-chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    document.getElementById('polkaMarginRow').style.display = (c.dataset.v==='border') ? 'flex' : 'none';
+    renderPolka();
+  };
+});
+document.getElementById('polkaMargin').addEventListener('input', ()=>{
+  document.getElementById('polkaMarginVal').textContent = document.getElementById('polkaMargin').value;
+  renderPolka();
+});
 
 let drawMode = false;
 drawToggle.addEventListener('click', ()=>{
@@ -965,6 +983,39 @@ function renderPolka(){
   polkaLayer.style.opacity = opacity;
   const stageW = stage.clientWidth || 320;
   const stageH = stage.clientHeight || stageW;
+
+  const layoutActive = document.querySelector('.polka-layout-chip.active');
+  const layout = layoutActive ? layoutActive.dataset.v : 'full';
+
+  if(layout==='border'){
+    const margin = parseInt(document.getElementById('polkaMargin').value);
+    const placeDot = (x,y)=>{
+      const d=document.createElement('div');
+      d.style.position='absolute';
+      d.style.left=(x-size/2)+'px'; d.style.top=(y-size/2)+'px';
+      d.style.width=size+'px'; d.style.height=size+'px';
+      d.innerHTML=shapeSVG(shape,color,size,false);
+      polkaLayer.appendChild(d);
+    };
+    const left = margin, top = margin;
+    const w = Math.max(0, stageW - margin*2);
+    const h = Math.max(0, stageH - margin*2);
+    const perimeter = 2*(w+h);
+    if(perimeter <= 0) return;
+    const count = Math.max(4, Math.round(perimeter/spacing));
+    const step = perimeter/count;
+    for(let i=0;i<count;i++){
+      const dist = i*step;
+      let x,y;
+      if(dist <= w){ x=left+dist; y=top; }
+      else if(dist <= w+h){ x=left+w; y=top+(dist-w); }
+      else if(dist <= 2*w+h){ x=left+w-(dist-w-h); y=top+h; }
+      else { x=left; y=top+h-(dist-2*w-h); }
+      placeDot(x,y);
+    }
+    return;
+  }
+
   const cols = Math.ceil(stageW/spacing)+2;
   const rows = Math.ceil(stageH/spacing)+2;
   for(let r=0;r<rows;r++){
@@ -1476,6 +1527,14 @@ async function captureCanvas(forceNoBg){
   stage.style.maxHeight = 'none';
   stage.style.aspectRatio = 'auto';
 
+  // Hide the stage's decorative white frame (border:6px solid #fff) during
+  // capture — otherwise it gets baked into the exported image as an
+  // unwanted white border. Restore it right after.
+  const prevBorder = stage.style.border;
+  const prevBoxShadow = stage.style.boxShadow;
+  stage.style.border = 'none';
+  stage.style.boxShadow = 'none';
+
   await nextFrame();
   let scale = 2;
   if(hasBg && imgNaturalW && fixedW > 0){
@@ -1490,6 +1549,8 @@ async function captureCanvas(forceNoBg){
   }
 
   // restore
+  stage.style.border = prevBorder;
+  stage.style.boxShadow = prevBoxShadow;
   stage.style.width = prevInline.width;
   stage.style.height = prevInline.height;
   stage.style.maxWidth = prevInline.maxWidth;
@@ -1527,16 +1588,36 @@ document.getElementById('expJpg').onclick = async ()=>{
   }catch(err){ setStatus('Export failed, please try again.'); }
 };
 
+// gif.js draws each frame onto its internal canvas with a plain
+// drawImage(image, 0, 0) — i.e. NO scaling. If a captured frame's pixel
+// size doesn't exactly match the GIF's declared width/height, the extra
+// area is simply cropped off (this is what caused the "cropped GIF" bug).
+// This helper resizes any canvas onto a new canvas of the exact target size.
+function toFixedSizeCanvas(srcCanvas, targetW, targetH){
+  if(srcCanvas.width === targetW && srcCanvas.height === targetH) return srcCanvas;
+  const out = document.createElement('canvas');
+  out.width = targetW; out.height = targetH;
+  const ctx = out.getContext('2d');
+  ctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, targetW, targetH);
+  return out;
+}
+
 document.getElementById('expGif').onclick = async ()=>{
   setStatus('Rendering motion GIF...');
   try{
-    const gif = new GIF({workers:2, quality:10, width:stage.clientWidth*2, height:stage.clientHeight*2, workerScript:__gifWorkerBlobUrl()});
     const frames = 14;
+    const captured = [];
     for(let i=0;i<frames;i++){
-      const c = await captureCanvas();
-      gif.addFrame(c, {delay:110});
+      captured.push(await captureCanvas());
       await new Promise(r=>setTimeout(r,90));
     }
+    // Use the actual pixel size of the first captured frame as the GIF's
+    // declared size, then normalize every frame to match it exactly.
+    const gifW = captured[0].width, gifH = captured[0].height;
+    const gif = new GIF({workers:2, quality:10, width:gifW, height:gifH, workerScript:__gifWorkerBlobUrl()});
+    captured.forEach(c=>{
+      gif.addFrame(toFixedSizeCanvas(c, gifW, gifH), {delay:110});
+    });
     gif.on('finished', async blob=>{
       await downloadFile(blob, 'neonmoon-motion.gif', 'image/gif');
       setStatus('Done! Motion GIF downloaded.');
@@ -1555,9 +1636,10 @@ document.getElementById('expBA').onclick = async ()=>{
   setStatus('Building Before→After GIF...');
   try{
     const after = await captureCanvas();
-    const gif = new GIF({workers:2, quality:10, width:stage.clientWidth*2, height:stage.clientHeight*2, workerScript:__gifWorkerBlobUrl()});
-    gif.addFrame(beforeSnapshot, {delay:900});
-    gif.addFrame(after, {delay:900});
+    const gifW = beforeSnapshot.width, gifH = beforeSnapshot.height;
+    const gif = new GIF({workers:2, quality:10, width:gifW, height:gifH, workerScript:__gifWorkerBlobUrl()});
+    gif.addFrame(toFixedSizeCanvas(beforeSnapshot, gifW, gifH), {delay:900});
+    gif.addFrame(toFixedSizeCanvas(after, gifW, gifH), {delay:900});
     gif.on('finished', async blob=>{
       await downloadFile(blob, 'neonmoon-before-after.gif', 'image/gif');
       setStatus('Done! Before→After GIF downloaded.');
