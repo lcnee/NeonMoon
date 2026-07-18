@@ -335,6 +335,24 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
 </style>
 </head>
 <body>
+<script>
+// Some in-app browsers (e.g. Zalo webview) ignore the viewport meta's
+// user-scalable=no / maximum-scale=1.0 and still allow native double-tap
+// zoom. If the user double-taps quickly, the page zooms in and there is
+// no way to zoom back out. Block the double-tap zoom gesture directly.
+(function(){
+  let lastTouchEnd = 0;
+  document.addEventListener('touchend', function(e){
+    const now = Date.now();
+    if (now - lastTouchEnd <= 350) {
+      e.preventDefault();
+    }
+    lastTouchEnd = now;
+  }, {passive:false});
+  // Also block pinch-zoom via gesture events (older iOS Safari/WebKit webviews)
+  document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
+})();
+</script>
 <div class="bg-fade"></div>
 <div class="app">
 
@@ -1374,6 +1392,57 @@ function renderImgText(){
 const expStatus = document.getElementById('expStatus');
 function setStatus(s){ expStatus.textContent = s; }
 
+// Robust "download" helper. In-app browsers (Zalo, Facebook, Messenger, etc.)
+// often silently swallow the <a download> click — no error, nothing saved.
+// Strategy: try the Web Share API first (works well on mobile and lets the
+// user save straight to their photo library); if that's unavailable/fails,
+// fall back to the normal <a download> click; if the user is in a webview
+// that still blocks it, also open the file in a new tab so they can long-press
+// "Save image" manually as a last resort.
+async function downloadFile(blob, filename, mime){
+  // 1) Try native share sheet (best experience on mobile, bypasses webview download blocks)
+  try{
+    if (navigator.canShare && navigator.share) {
+      const file = new File([blob], filename, {type: mime});
+      if (navigator.canShare({files:[file]})) {
+        await navigator.share({files:[file], title: filename});
+        return true;
+      }
+    }
+  }catch(err){ /* user cancelled share or share failed — fall through to download */ }
+
+  // 2) Normal download link
+  const url = URL.createObjectURL(blob);
+  try{
+    const a = document.createElement('a');
+    a.download = filename;
+    a.href = url;
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }catch(err){}
+
+  // 3) Fallback: open in a new tab so the user can long-press to save,
+  // in case the webview silently blocked the download click above.
+  setTimeout(()=>{
+    try{ window.open(url, '_blank'); }catch(err){}
+  }, 300);
+
+  return true;
+}
+
+function dataUrlToBlob(dataUrl){
+  const parts = dataUrl.split(',');
+  const mimeMatch = parts[0].match(/:(.*?);/);
+  const mime = mimeMatch ? mimeMatch[1] : 'image/png';
+  const bin = atob(parts[1]);
+  const arr = new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++){ arr[i] = bin.charCodeAt(i); }
+  return new Blob([arr], {type: mime});
+}
+
+
 function nextFrame(){ return new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))); }
 async function captureCanvas(forceNoBg){
   if(typeof html2canvas === 'undefined'){
@@ -1437,7 +1506,7 @@ document.getElementById('expPng').onclick = async ()=>{
   setStatus('Exporting PNG...');
   try{
     const c = await captureCanvas();
-    const a=document.createElement('a'); a.download='neonmoon.png'; a.href=c.toDataURL('image/png'); a.click();
+    await downloadFile(dataUrlToBlob(c.toDataURL('image/png')), 'neonmoon.png', 'image/png');
     setStatus('Done! PNG downloaded.');
   }catch(err){ setStatus('Export failed, please try again.'); }
 };
@@ -1445,7 +1514,7 @@ document.getElementById('expTransparent').onclick = async ()=>{
   setStatus('Exporting transparent PNG...');
   try{
     const c = await captureCanvas(true);
-    const a=document.createElement('a'); a.download='neonmoon-transparent.png'; a.href=c.toDataURL('image/png'); a.click();
+    await downloadFile(dataUrlToBlob(c.toDataURL('image/png')), 'neonmoon-transparent.png', 'image/png');
     setStatus('Done! Transparent PNG downloaded.');
   }catch(err){ setStatus('Export failed, please try again.'); }
 };
@@ -1453,7 +1522,7 @@ document.getElementById('expJpg').onclick = async ()=>{
   setStatus('Exporting JPG...');
   try{
     const c = await captureCanvas();
-    const a=document.createElement('a'); a.download='neonmoon.jpg'; a.href=c.toDataURL('image/jpeg',0.92); a.click();
+    await downloadFile(dataUrlToBlob(c.toDataURL('image/jpeg',0.92)), 'neonmoon.jpg', 'image/jpeg');
     setStatus('Done! JPG downloaded.');
   }catch(err){ setStatus('Export failed, please try again.'); }
 };
@@ -1468,8 +1537,8 @@ document.getElementById('expGif').onclick = async ()=>{
       gif.addFrame(c, {delay:110});
       await new Promise(r=>setTimeout(r,90));
     }
-    gif.on('finished', blob=>{
-      const a=document.createElement('a'); a.download='neonmoon-motion.gif'; a.href=URL.createObjectURL(blob); a.click();
+    gif.on('finished', async blob=>{
+      await downloadFile(blob, 'neonmoon-motion.gif', 'image/gif');
       setStatus('Done! Motion GIF downloaded.');
     });
     gif.render();
@@ -1489,8 +1558,8 @@ document.getElementById('expBA').onclick = async ()=>{
     const gif = new GIF({workers:2, quality:10, width:stage.clientWidth*2, height:stage.clientHeight*2, workerScript:__gifWorkerBlobUrl()});
     gif.addFrame(beforeSnapshot, {delay:900});
     gif.addFrame(after, {delay:900});
-    gif.on('finished', blob=>{
-      const a=document.createElement('a'); a.download='neonmoon-before-after.gif'; a.href=URL.createObjectURL(blob); a.click();
+    gif.on('finished', async blob=>{
+      await downloadFile(blob, 'neonmoon-before-after.gif', 'image/gif');
       setStatus('Done! Before→After GIF downloaded.');
       beforeSnapshot = null;
     });
