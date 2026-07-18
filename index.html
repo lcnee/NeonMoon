@@ -1386,18 +1386,47 @@ async function captureCanvas(forceNoBg){
     bgLayer.style.backgroundImage='none'; bgLayer.style.backgroundColor='transparent';
     stage.style.backgroundImage='none'; stage.style.backgroundColor='transparent';
   }
+
+  // Lock the stage to its EXACT current pixel size before capture.
+  // Without this, html2canvas clones the page into a hidden iframe to render it,
+  // and responsive units on .stage (aspect-ratio set dynamically in JS, max-height:60vh,
+  // max-width:86%) can resolve to a different box size inside that clone than what is
+  // shown on screen — which is what produces the cropped/zoomed export.
+  // Forcing fixed inline px dimensions removes that ambiguity entirely.
+  const rect = stage.getBoundingClientRect();
+  const fixedW = Math.round(rect.width);
+  const fixedH = Math.round(rect.height);
+  const prevInline = {
+    width: stage.style.width, height: stage.style.height,
+    maxWidth: stage.style.maxWidth, maxHeight: stage.style.maxHeight,
+    aspectRatio: stage.style.aspectRatio
+  };
+  stage.style.width = fixedW + 'px';
+  stage.style.height = fixedH + 'px';
+  stage.style.maxWidth = 'none';
+  stage.style.maxHeight = 'none';
+  stage.style.aspectRatio = 'auto';
+
   await nextFrame();
   let scale = 2;
-  if(hasBg && imgNaturalW && stage.clientWidth > 0){
-    const computed = imgNaturalW / stage.clientWidth;
+  if(hasBg && imgNaturalW && fixedW > 0){
+    const computed = imgNaturalW / fixedW;
     if(isFinite(computed) && computed > 0){ scale = Math.min(Math.max(computed, 0.5), 6); }
   }
   let canvas;
   try{
-    canvas = await html2canvas(stage, {backgroundColor:null, useCORS:true, scale});
+    canvas = await html2canvas(stage, {backgroundColor:null, useCORS:true, scale, width:fixedW, height:fixedH, windowWidth:fixedW, windowHeight:fixedH});
   }catch(err){
-    canvas = await html2canvas(stage, {backgroundColor:null, useCORS:true, scale:2});
+    canvas = await html2canvas(stage, {backgroundColor:null, useCORS:true, scale:2, width:fixedW, height:fixedH, windowWidth:fixedW, windowHeight:fixedH});
   }
+
+  // restore
+  stage.style.width = prevInline.width;
+  stage.style.height = prevInline.height;
+  stage.style.maxWidth = prevInline.maxWidth;
+  stage.style.maxHeight = prevInline.maxHeight;
+  stage.style.aspectRatio = prevInline.aspectRatio;
+
   if(!hasBg){
     bgLayer.style.backgroundImage=prevImg||''; bgLayer.style.backgroundColor=prevColor||'';
     stage.style.backgroundImage=''; stage.style.backgroundColor='';
