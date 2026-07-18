@@ -1282,7 +1282,7 @@ function readItSettings(){
   itState.color = document.getElementById('itColor').value;
   itState.font = document.getElementById('itFont').value;
   const words = flattenWords(itState.text);
-  itState.gaps = words.map((w,i)=> itState.gaps[i] || {img:null, size:100, radius:0, borderW:0, borderColor:'#ffffff', heightPct:100});
+  itState.gaps = words.map((w,i)=> itState.gaps[i] || {img:null, size:100, radius:0, borderW:0, borderColor:'#ffffff', heightPct:100, type:'image', emoji:'😊'});
 }
 
 ['itText','itAlign','itSize','itLetter','itLine','itColor','itFont'].forEach(id=>{
@@ -1305,22 +1305,41 @@ document.getElementById('groupScale').addEventListener('input', e=>{
 function buildGapList(words){
   const list = document.getElementById('gapList');
   list.innerHTML='';
+  const quickEmojis = ['😊','😂','🥰','😍','✨','🔥','💕','⭐','🎀','🌸','💫','🐰','🍓','☁️','💖'];
   words.forEach((w,i)=>{
     const row = document.createElement('div');
     row.className='gap-item';
     const g = itState.gaps[i];
+    if(!g.type) g.type = 'image';
+    const isEmoji = g.type === 'emoji';
     row.innerHTML = `
       <div class="top">
-        <div class="thumb" id="thumb${i}" style="${g.img?`background-image:url(${g.img})`:''}"></div>
+        <div class="thumb" id="thumb${i}" style="${(!isEmoji && g.img)?`background-image:url(${g.img})`:''}${isEmoji?`display:flex;align-items:center;justify-content:center;font-size:22px;`:''}">${isEmoji ? (g.emoji||'') : ''}</div>
         <div class="lbl">after "${w}"</div>
-        <button class="file-btn" type="button" id="gapBtn${i}">Choose image</button>
-        <input type="file" accept="image/*" id="gapInput${i}">
+      </div>
+      <div class="chip-row" style="margin:4px 0;">
+        <button class="chip gapType-chip ${!isEmoji?'active':''}" data-i="${i}" data-v="image">🖼 Image</button>
+        <button class="chip gapType-chip ${isEmoji?'active':''}" data-i="${i}" data-v="emoji">😊 Emoji</button>
+      </div>
+      <div class="gap-image-controls" id="gapImageControls${i}" style="${isEmoji?'display:none;':''}">
+        <div class="row" style="margin-bottom:0;">
+          <button class="file-btn" type="button" id="gapBtn${i}">Choose image</button>
+          <input type="file" accept="image/*" id="gapInput${i}">
+        </div>
+      </div>
+      <div class="gap-emoji-controls" id="gapEmojiControls${i}" style="${isEmoji?'':'display:none;'}">
+        <div class="row" style="margin-bottom:4px;">
+          <input type="text" id="gapEmoji${i}" value="${g.emoji||''}" placeholder="Type or paste an emoji" style="width:70px;font-size:18px;text-align:center;">
+        </div>
+        <div class="chip-row chip-row-wrap" style="margin-bottom:4px;">
+          ${quickEmojis.map(em=>`<button class="chip gapEmojiPick-chip" data-i="${i}" data-em="${em}">${em}</button>`).join('')}
+        </div>
       </div>
       <div class="row" style="margin-bottom:0;">
         <label class="small">Size</label><input type="range" id="gapSize${i}" min="40" max="220" value="${g.size}"><span class="range-val" id="gapSize${i}Val">${g.size}</span>
         <label class="small">Round</label><input type="range" id="gapRadius${i}" min="0" max="50" value="${g.radius}"><span class="range-val" id="gapRadius${i}Val">${g.radius}</span>
       </div>
-      <div class="row" style="margin-bottom:0;">
+      <div class="row gap-image-only" id="gapImageOnly${i}" style="margin-bottom:0;${isEmoji?'display:none;':''}">
         <label class="small">Height</label><input type="range" id="gapHeight${i}" min="30" max="100" value="${g.heightPct!=null?g.heightPct:100}"><span class="range-val" id="gapHeight${i}Val">${g.heightPct!=null?g.heightPct:100}</span>
         <label class="small">Border</label><input type="range" id="gapBorderW${i}" min="0" max="10" value="${g.borderW}"><span class="range-val" id="gapBorderW${i}Val">${g.borderW}</span>
         <input type="color" id="gapBorderColor${i}" value="${g.borderColor}">
@@ -1337,6 +1356,35 @@ function buildGapList(words){
       };
       reader.readAsDataURL(f);
     };
+    row.querySelectorAll('.gapType-chip[data-i="'+i+'"]').forEach(btn=>{
+      btn.onclick = ()=>{
+        itState.gaps[i].type = btn.dataset.v;
+        buildGapList(flattenWords(itState.text));
+        renderImgText();
+        pushHistory();
+      };
+    });
+    const emojiInput = row.querySelector('#gapEmoji'+i);
+    if(emojiInput){
+      emojiInput.addEventListener('input', e=>{
+        itState.gaps[i].emoji = e.target.value;
+        const t = document.getElementById('thumb'+i);
+        if(t) t.textContent = e.target.value;
+        renderImgText();
+        debouncedPushHistory();
+      });
+    }
+    row.querySelectorAll('.gapEmojiPick-chip[data-i="'+i+'"]').forEach(btn=>{
+      btn.onclick = ()=>{
+        itState.gaps[i].emoji = btn.dataset.em;
+        const inp = document.getElementById('gapEmoji'+i);
+        if(inp) inp.value = btn.dataset.em;
+        const t = document.getElementById('thumb'+i);
+        if(t) t.textContent = btn.dataset.em;
+        renderImgText();
+        pushHistory();
+      };
+    });
     row.querySelector('#gapSize'+i).oninput = e=>{ itState.gaps[i].size = parseInt(e.target.value); document.getElementById('gapSize'+i+'Val').textContent=e.target.value; renderImgText(); };
     row.querySelector('#gapRadius'+i).oninput = e=>{ itState.gaps[i].radius = parseInt(e.target.value); document.getElementById('gapRadius'+i+'Val').textContent=e.target.value; renderImgText(); };
     row.querySelector('#gapHeight'+i).oninput = e=>{ itState.gaps[i].heightPct = parseInt(e.target.value); document.getElementById('gapHeight'+i+'Val').textContent=e.target.value; renderImgText(); };
@@ -1394,7 +1442,21 @@ function renderImgText(){
       if(itState.font && itState.font!=='auto'){ wSpan.style.fontFamily = itState.font; }
       wrap.appendChild(wSpan);
       const g = itState.gaps[wordIndex];
-      if(g && g.img){
+      if(g && g.type==='emoji' && g.emoji){
+        const h = (parseInt(itState.size)*(g.size/100))*scale;
+        const box = document.createElement('div');
+        box.style.display='inline-flex';
+        box.style.flex='none';
+        box.style.alignItems='center';
+        box.style.justifyContent='center';
+        box.style.verticalAlign='middle';
+        box.style.height = h+'px';
+        box.style.lineHeight = h+'px';
+        box.style.fontSize = h+'px';
+        box.style.borderRadius = (g.radius*scale)+'px';
+        box.textContent = g.emoji;
+        wrap.appendChild(box);
+      } else if(g && g.type!=='emoji' && g.img){
         const h = (parseInt(itState.size)*(g.size/100))*scale;
         const heightPct = (g.heightPct!=null ? g.heightPct : 100)/100;
         const visH = h*heightPct;
