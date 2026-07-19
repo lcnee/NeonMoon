@@ -281,7 +281,16 @@ button.ghost{
 .added-item .rm{background:none;border:none;color:#ffb3b3;font-size:16px;padding:0 4px;}
 
 .gap-list{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.gap-item{border:1px solid rgba(0,0,0,0.08);border-radius:10px;overflow:hidden;background:rgba(255,255,255,0.6);}
+.gap-item .thumb{border-radius:6px;background:#eee no-repeat center/cover;}
+.gap-item .gap-body{padding:0 8px 8px 8px;}
 .gap-item{display:flex;flex-direction:column;gap:6px;border:none;background:#fff;box-shadow:0 2px 10px rgba(150,120,200,.12);border-radius:14px;padding:8px;font-size:11.5px;}
+.gap-pair-row{display:flex;gap:10px;align-items:center;}
+.gap-pair-row .field{flex:1;display:flex;align-items:center;gap:4px;min-width:0;}
+.gap-pair-row .field label{font-size:10px;color:var(--grayl);flex:none;white-space:nowrap;}
+.gap-pair-row .field input[type=range]{flex:1;min-width:0;}
+.gap-pair-row .field .range-val{flex:none;width:22px;text-align:right;font-size:10px;color:var(--gray);font-weight:700;}
+.gap-pair-row input[type=color]{flex:none;width:30px;height:26px;padding:0;border:none;border-radius:6px;}
 .gap-item .top{display:flex;align-items:center;gap:8px;}
 .gap-item .thumb{width:28px;height:28px;background:#f2f2f4;background-size:cover;background-position:center;flex:none;border-radius:6px;}
 .gap-item .lbl{flex:1;color:var(--grayl);}
@@ -379,7 +388,7 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
     <button id="expJpg">🖼 Export JPG</button>
     <button id="expTransparent">🫥 Transparent PNG (no bg)</button>
     <button id="expGif">✨ Motion GIF</button>
-    <button id="expBA">↔ Before→After GIF</button>
+    <button id="expLive">🔴 Live Photo</button>
   </div>
   <div class="export-status-fixed" id="expStatus"></div>
 
@@ -609,7 +618,8 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
 
     <div class="subpanel" id="s3b">
       <div class="hint">Type your text in the "Text" tab first — each gap between words shows up here so you can insert an image.</div>
-      <div class="gap-list" id="gapList"></div>
+      <div class="chip-row chip-row-wrap" id="gapTabs"></div>
+      <div id="gapEditor"></div>
     </div>
 
     <div class="subpanel" id="s3c">
@@ -1282,7 +1292,7 @@ function readItSettings(){
   itState.color = document.getElementById('itColor').value;
   itState.font = document.getElementById('itFont').value;
   const words = flattenWords(itState.text);
-  itState.gaps = words.map((w,i)=> itState.gaps[i] || {img:null, size:100, radius:0, borderW:0, borderColor:'#ffffff', heightPct:100, type:'image', emoji:'😊'});
+  itState.gaps = words.map((w,i)=> itState.gaps[i] || {img:null, size:100, radius:0, borderW:0, borderColor:'#ffffff', heightPct:100, widthPct:100, posX:50, posY:50, type:'image', emoji:'😊'});
 }
 
 ['itText','itAlign','itSize','itLetter','itLine','itColor','itFont'].forEach(id=>{
@@ -1302,96 +1312,125 @@ document.getElementById('groupScale').addEventListener('input', e=>{
   renderImgText();
 });
 
+let gapActiveIndex = 0;
 function buildGapList(words){
-  const list = document.getElementById('gapList');
-  list.innerHTML='';
-  const quickEmojis = ['😊','😂','🥰','😍','✨','🔥','💕','⭐','🎀','🌸','💫','🐰','🍓','☁️','💖'];
+  const tabsEl = document.getElementById('gapTabs');
+  const editorEl = document.getElementById('gapEditor');
+  if(gapActiveIndex >= words.length) gapActiveIndex = Math.max(0, words.length-1);
+  const quickEmojis = ['🍀','⭐️','❤️','✨','🕥','🐰','🤍','👽','👀','🧤','🍎','🍏','🥝','🥑','🍥','🍧','🎂','🧃','🥤','🎱','🎹','🎼','🎧','🎸','🧩','🧸','🎀','🎐'];
+
+  // --- tab row (styled like the main Text / Insert images / Resize all bar) ---
+  tabsEl.innerHTML='';
   words.forEach((w,i)=>{
-    const row = document.createElement('div');
-    row.className='gap-item';
-    const g = itState.gaps[i];
-    if(!g.type) g.type = 'image';
-    const isEmoji = g.type === 'emoji';
-    row.innerHTML = `
-      <div class="top">
-        <div class="thumb" id="thumb${i}" style="${(!isEmoji && g.img)?`background-image:url(${g.img})`:''}${isEmoji?`display:flex;align-items:center;justify-content:center;font-size:22px;`:''}">${isEmoji ? (g.emoji||'') : ''}</div>
-        <div class="lbl">after "${w}"</div>
-      </div>
-      <div class="chip-row" style="margin:4px 0;">
-        <button class="chip gapType-chip ${!isEmoji?'active':''}" data-i="${i}" data-v="image">🖼 Image</button>
-        <button class="chip gapType-chip ${isEmoji?'active':''}" data-i="${i}" data-v="emoji">😊 Emoji</button>
-      </div>
-      <div class="gap-image-controls" id="gapImageControls${i}" style="${isEmoji?'display:none;':''}">
-        <div class="row" style="margin-bottom:0;">
-          <button class="file-btn" type="button" id="gapBtn${i}">Choose image</button>
-          <input type="file" accept="image/*" id="gapInput${i}">
-        </div>
-      </div>
-      <div class="gap-emoji-controls" id="gapEmojiControls${i}" style="${isEmoji?'':'display:none;'}">
-        <div class="row" style="margin-bottom:4px;">
-          <input type="text" id="gapEmoji${i}" value="${g.emoji||''}" placeholder="Type or paste an emoji" style="width:70px;font-size:18px;text-align:center;">
-        </div>
-        <div class="chip-row chip-row-wrap" style="margin-bottom:4px;">
-          ${quickEmojis.map(em=>`<button class="chip gapEmojiPick-chip" data-i="${i}" data-em="${em}">${em}</button>`).join('')}
-        </div>
-      </div>
-      <div class="row" style="margin-bottom:0;">
-        <label class="small">Size</label><input type="range" id="gapSize${i}" min="40" max="220" value="${g.size}"><span class="range-val" id="gapSize${i}Val">${g.size}</span>
-        <label class="small">Round</label><input type="range" id="gapRadius${i}" min="0" max="50" value="${g.radius}"><span class="range-val" id="gapRadius${i}Val">${g.radius}</span>
-      </div>
-      <div class="row gap-image-only" id="gapImageOnly${i}" style="margin-bottom:0;${isEmoji?'display:none;':''}">
-        <label class="small">Height</label><input type="range" id="gapHeight${i}" min="30" max="100" value="${g.heightPct!=null?g.heightPct:100}"><span class="range-val" id="gapHeight${i}Val">${g.heightPct!=null?g.heightPct:100}</span>
-        <label class="small">Border</label><input type="range" id="gapBorderW${i}" min="0" max="10" value="${g.borderW}"><span class="range-val" id="gapBorderW${i}Val">${g.borderW}</span>
-        <input type="color" id="gapBorderColor${i}" value="${g.borderColor}">
-      </div>`;
-    row.querySelector('#gapBtn'+i).onclick = ()=> row.querySelector('#gapInput'+i).click();
-    row.querySelector('#gapInput'+i).onchange = e=>{
-      const f = e.target.files[0]; if(!f) return;
-      const reader = new FileReader();
-      reader.onload = ev=>{
-        itState.gaps[i].img = ev.target.result;
-        document.getElementById('thumb'+i).style.backgroundImage = `url(${ev.target.result})`;
-        renderImgText();
-        pushHistory();
-      };
-      reader.readAsDataURL(f);
-    };
-    row.querySelectorAll('.gapType-chip[data-i="'+i+'"]').forEach(btn=>{
-      btn.onclick = ()=>{
-        itState.gaps[i].type = btn.dataset.v;
-        buildGapList(flattenWords(itState.text));
-        renderImgText();
-        pushHistory();
-      };
-    });
-    const emojiInput = row.querySelector('#gapEmoji'+i);
-    if(emojiInput){
-      emojiInput.addEventListener('input', e=>{
-        itState.gaps[i].emoji = e.target.value;
-        const t = document.getElementById('thumb'+i);
-        if(t) t.textContent = e.target.value;
-        renderImgText();
-        debouncedPushHistory();
-      });
-    }
-    row.querySelectorAll('.gapEmojiPick-chip[data-i="'+i+'"]').forEach(btn=>{
-      btn.onclick = ()=>{
-        itState.gaps[i].emoji = btn.dataset.em;
-        const inp = document.getElementById('gapEmoji'+i);
-        if(inp) inp.value = btn.dataset.em;
-        const t = document.getElementById('thumb'+i);
-        if(t) t.textContent = btn.dataset.em;
-        renderImgText();
-        pushHistory();
-      };
-    });
-    row.querySelector('#gapSize'+i).oninput = e=>{ itState.gaps[i].size = parseInt(e.target.value); document.getElementById('gapSize'+i+'Val').textContent=e.target.value; renderImgText(); };
-    row.querySelector('#gapRadius'+i).oninput = e=>{ itState.gaps[i].radius = parseInt(e.target.value); document.getElementById('gapRadius'+i+'Val').textContent=e.target.value; renderImgText(); };
-    row.querySelector('#gapHeight'+i).oninput = e=>{ itState.gaps[i].heightPct = parseInt(e.target.value); document.getElementById('gapHeight'+i+'Val').textContent=e.target.value; renderImgText(); };
-    row.querySelector('#gapBorderW'+i).oninput = e=>{ itState.gaps[i].borderW = parseInt(e.target.value); document.getElementById('gapBorderW'+i+'Val').textContent=e.target.value; renderImgText(); };
-    row.querySelector('#gapBorderColor'+i).oninput = e=>{ itState.gaps[i].borderColor = e.target.value; renderImgText(); };
-    list.appendChild(row);
+    const btn = document.createElement('button');
+    btn.className = 'chip gap-tab-chip' + (i===gapActiveIndex ? ' active' : '');
+    btn.textContent = w;
+    btn.onclick = ()=>{ gapActiveIndex = i; buildGapList(flattenWords(itState.text)); };
+    tabsEl.appendChild(btn);
   });
+
+  // --- editor for the selected gap only ---
+  editorEl.innerHTML='';
+  if(!words.length) return;
+  const i = gapActiveIndex;
+  const w = words[i];
+  const g = itState.gaps[i];
+  if(!g.type) g.type = 'image';
+  const isEmoji = g.type === 'emoji';
+  const row = document.createElement('div');
+  row.className = 'gap-item';
+  row.innerHTML = `
+    <div class="top">
+      <div class="thumb" id="thumb${i}" style="${(!isEmoji && g.img)?`background-image:url(${g.img});background-size:cover;`:''}${isEmoji?`display:flex;align-items:center;justify-content:center;font-size:22px;`:''}">${isEmoji ? (g.emoji||'') : ''}</div>
+      <div class="lbl">after "${w}"</div>
+    </div>
+    <div class="chip-row" style="margin:4px 0;">
+      <button class="chip gapType-chip ${!isEmoji?'active':''}" data-v="image">🖼 Image</button>
+      <button class="chip gapType-chip ${isEmoji?'active':''}" data-v="emoji">😊 Emoji</button>
+    </div>
+    <div class="gap-pair-row" style="margin-bottom:8px;">
+      <div class="field"><label>Size</label><input type="range" id="gapSize${i}" min="40" max="220" value="${g.size}"><span class="range-val" id="gapSize${i}Val">${g.size}</span></div>
+    </div>
+    <div class="gap-image-controls" id="gapImageControls${i}" style="${isEmoji?'display:none;':''}">
+      <div class="row" style="margin-bottom:0;">
+        <button class="file-btn" type="button" id="gapBtn${i}">Choose image</button>
+        <input type="file" accept="image/*" id="gapInput${i}">
+      </div>
+    </div>
+    <div class="gap-emoji-controls" id="gapEmojiControls${i}" style="${isEmoji?'':'display:none;'}">
+      <div class="row" style="margin-bottom:4px;">
+        <input type="text" id="gapEmoji${i}" value="${g.emoji||''}" placeholder="Type or paste an emoji" style="width:70px;font-size:18px;text-align:center;">
+      </div>
+      <div class="chip-row chip-row-wrap" style="margin-bottom:4px;">
+        ${quickEmojis.map(em=>`<button class="chip gapEmojiPick-chip" data-em="${em}">${em}</button>`).join('')}
+      </div>
+    </div>
+    <div class="gap-image-only" id="gapImageOnly${i}" style="${isEmoji?'display:none;':''}">
+      <div class="gap-pair-row" style="margin-bottom:6px;">
+        <div class="field"><label>Width</label><input type="range" id="gapWidth${i}" min="30" max="100" value="${g.widthPct!=null?g.widthPct:100}"><span class="range-val" id="gapWidth${i}Val">${g.widthPct!=null?g.widthPct:100}</span></div>
+        <div class="field"><label>Height</label><input type="range" id="gapHeight${i}" min="30" max="100" value="${g.heightPct!=null?g.heightPct:100}"><span class="range-val" id="gapHeight${i}Val">${g.heightPct!=null?g.heightPct:100}</span></div>
+      </div>
+      <div class="gap-pair-row" style="margin-bottom:6px;">
+        <div class="field"><label>↔</label><input type="range" id="gapPosX${i}" min="0" max="100" value="${g.posX!=null?g.posX:50}"><span class="range-val" id="gapPosX${i}Val">${g.posX!=null?g.posX:50}</span></div>
+        <div class="field"><label>↕</label><input type="range" id="gapPosY${i}" min="0" max="100" value="${g.posY!=null?g.posY:50}"><span class="range-val" id="gapPosY${i}Val">${g.posY!=null?g.posY:50}</span></div>
+      </div>
+      <div class="gap-pair-row">
+        <div class="field"><label>Round</label><input type="range" id="gapRadius${i}" min="0" max="50" value="${g.radius}"><span class="range-val" id="gapRadius${i}Val">${g.radius}</span></div>
+        <div class="field"><label>Border</label><input type="range" id="gapBorderW${i}" min="0" max="10" value="${g.borderW}"><span class="range-val" id="gapBorderW${i}Val">${g.borderW}</span></div>
+        <input type="color" id="gapBorderColor${i}" value="${g.borderColor}">
+      </div>
+    </div>`;
+  row.querySelector('#gapBtn'+i).onclick = ()=> row.querySelector('#gapInput'+i).click();
+  row.querySelector('#gapInput'+i).onchange = e=>{
+    const f = e.target.files[0]; if(!f) return;
+    const reader = new FileReader();
+    reader.onload = ev=>{
+      itState.gaps[i].img = ev.target.result;
+      const t = document.getElementById('thumb'+i);
+      if(t){ t.style.backgroundImage = `url(${ev.target.result})`; t.style.backgroundSize='cover'; }
+      renderImgText();
+      pushHistory();
+    };
+    reader.readAsDataURL(f);
+  };
+  row.querySelectorAll('.gapType-chip').forEach(btn=>{
+    btn.onclick = ()=>{
+      itState.gaps[i].type = btn.dataset.v;
+      buildGapList(flattenWords(itState.text));
+      renderImgText();
+      pushHistory();
+    };
+  });
+  const emojiInput = row.querySelector('#gapEmoji'+i);
+  if(emojiInput){
+    emojiInput.addEventListener('input', e=>{
+      itState.gaps[i].emoji = e.target.value;
+      const t = document.getElementById('thumb'+i);
+      if(t) t.textContent = e.target.value;
+      renderImgText();
+      debouncedPushHistory();
+    });
+  }
+  row.querySelectorAll('.gapEmojiPick-chip').forEach(btn=>{
+    btn.onclick = ()=>{
+      itState.gaps[i].emoji = btn.dataset.em;
+      const inp = document.getElementById('gapEmoji'+i);
+      if(inp) inp.value = btn.dataset.em;
+      const t = document.getElementById('thumb'+i);
+      if(t) t.textContent = btn.dataset.em;
+      renderImgText();
+      pushHistory();
+    };
+  });
+  row.querySelector('#gapSize'+i).oninput = e=>{ itState.gaps[i].size = parseInt(e.target.value); document.getElementById('gapSize'+i+'Val').textContent=e.target.value; renderImgText(); };
+  row.querySelector('#gapWidth'+i).oninput = e=>{ itState.gaps[i].widthPct = parseInt(e.target.value); document.getElementById('gapWidth'+i+'Val').textContent=e.target.value; renderImgText(); };
+  row.querySelector('#gapPosX'+i).oninput = e=>{ itState.gaps[i].posX = parseInt(e.target.value); document.getElementById('gapPosX'+i+'Val').textContent=e.target.value; renderImgText(); };
+  row.querySelector('#gapPosY'+i).oninput = e=>{ itState.gaps[i].posY = parseInt(e.target.value); document.getElementById('gapPosY'+i+'Val').textContent=e.target.value; renderImgText(); };
+  row.querySelector('#gapRadius'+i).oninput = e=>{ itState.gaps[i].radius = parseInt(e.target.value); document.getElementById('gapRadius'+i+'Val').textContent=e.target.value; renderImgText(); };
+  row.querySelector('#gapHeight'+i).oninput = e=>{ itState.gaps[i].heightPct = parseInt(e.target.value); document.getElementById('gapHeight'+i+'Val').textContent=e.target.value; renderImgText(); };
+  row.querySelector('#gapBorderW'+i).oninput = e=>{ itState.gaps[i].borderW = parseInt(e.target.value); document.getElementById('gapBorderW'+i+'Val').textContent=e.target.value; renderImgText(); };
+  row.querySelector('#gapBorderColor'+i).oninput = e=>{ itState.gaps[i].borderColor = e.target.value; renderImgText(); };
+  editorEl.appendChild(row);
 }
 
 function renderImgText(){
@@ -1459,22 +1498,26 @@ function renderImgText(){
       } else if(g && g.type!=='emoji' && g.img){
         const h = (parseInt(itState.size)*(g.size/100))*scale;
         const heightPct = (g.heightPct!=null ? g.heightPct : 100)/100;
+        const widthPct = (g.widthPct!=null ? g.widthPct : 100)/100;
         const visH = h*heightPct;
+        const visW = h*widthPct;
         const box = document.createElement('div');
         box.style.display='inline-flex';
         box.style.flex='none';
         box.style.alignItems='center';
         box.style.justifyContent='center';
         box.style.verticalAlign='middle';
+        box.style.width = visW+'px';
         box.style.height = visH+'px';
         box.style.overflow='hidden';
         box.style.borderRadius = (g.radius*scale)+'px';
         box.style.border = g.borderW>0 ? `${g.borderW*scale}px solid ${g.borderColor}` : 'none';
         const im = document.createElement('img');
         im.src = g.img;
-        im.style.height = h+'px';
-        im.style.width='auto';
-        im.style.maxWidth='none';
+        im.style.width='100%';
+        im.style.height='100%';
+        im.style.objectFit='cover';
+        im.style.objectPosition = (g.posX!=null?g.posX:50)+'% '+(g.posY!=null?g.posY:50)+'%';
         im.style.flex='none';
         im.style.display='block';
         if(isFillAuto && !im.complete){
@@ -1664,51 +1707,45 @@ function toFixedSizeCanvas(srcCanvas, targetW, targetH){
   return out;
 }
 
+async function renderMotionGif(){
+  const frames = 14;
+  const captured = [];
+  for(let i=0;i<frames;i++){
+    captured.push(await captureCanvas());
+    await new Promise(r=>setTimeout(r,90));
+  }
+  // Use the actual pixel size of the first captured frame as the GIF's
+  // declared size, then normalize every frame to match it exactly.
+  const gifW = captured[0].width, gifH = captured[0].height;
+  const gif = new GIF({workers:2, quality:10, width:gifW, height:gifH, workerScript:__gifWorkerBlobUrl()});
+  captured.forEach(c=>{
+    gif.addFrame(toFixedSizeCanvas(c, gifW, gifH), {delay:110});
+  });
+  return new Promise((resolve,reject)=>{
+    gif.on('finished', blob=>resolve(blob));
+    try{ gif.render(); }catch(err){ reject(err); }
+  });
+}
+
 document.getElementById('expGif').onclick = async ()=>{
   setStatus('Rendering motion GIF...');
   try{
-    const frames = 14;
-    const captured = [];
-    for(let i=0;i<frames;i++){
-      captured.push(await captureCanvas());
-      await new Promise(r=>setTimeout(r,90));
-    }
-    // Use the actual pixel size of the first captured frame as the GIF's
-    // declared size, then normalize every frame to match it exactly.
-    const gifW = captured[0].width, gifH = captured[0].height;
-    const gif = new GIF({workers:2, quality:10, width:gifW, height:gifH, workerScript:__gifWorkerBlobUrl()});
-    captured.forEach(c=>{
-      gif.addFrame(toFixedSizeCanvas(c, gifW, gifH), {delay:110});
-    });
-    gif.on('finished', async blob=>{
-      await downloadFile(blob, 'neonmoon-motion.gif', 'image/gif');
-      setStatus('Done! Motion GIF downloaded.');
-    });
-    gif.render();
+    const blob = await renderMotionGif();
+    await downloadFile(blob, 'neonmoon-motion.gif', 'image/gif');
+    setStatus('Done! Motion GIF downloaded.');
   }catch(err){ setStatus('GIF render failed, please try again.'); }
 };
 
-let beforeSnapshot = null;
-document.getElementById('expBA').onclick = async ()=>{
-  if(!beforeSnapshot){
-    beforeSnapshot = await captureCanvas();
-    setStatus('"Before" saved. Keep editing, then tap again to build the GIF.');
-    return;
-  }
-  setStatus('Building Before→After GIF...');
+// "Live Photo" — reuses the exact same short burst-capture animation as
+// Motion GIF (a GIF is the only animated format we can reliably build and
+// download from the browser), just packaged/labelled like a Live Photo.
+document.getElementById('expLive').onclick = async ()=>{
+  setStatus('Rendering Live Photo...');
   try{
-    const after = await captureCanvas();
-    const gifW = beforeSnapshot.width, gifH = beforeSnapshot.height;
-    const gif = new GIF({workers:2, quality:10, width:gifW, height:gifH, workerScript:__gifWorkerBlobUrl()});
-    gif.addFrame(toFixedSizeCanvas(beforeSnapshot, gifW, gifH), {delay:900});
-    gif.addFrame(toFixedSizeCanvas(after, gifW, gifH), {delay:900});
-    gif.on('finished', async blob=>{
-      await downloadFile(blob, 'neonmoon-before-after.gif', 'image/gif');
-      setStatus('Done! Before→After GIF downloaded.');
-      beforeSnapshot = null;
-    });
-    gif.render();
-  }catch(err){ setStatus('GIF build failed.'); }
+    const blob = await renderMotionGif();
+    await downloadFile(blob, 'neonmoon-live.gif', 'image/gif');
+    setStatus('Done! Live Photo (GIF) downloaded.');
+  }catch(err){ setStatus('Live Photo render failed, please try again.'); }
 };
 
 // ---- UNDO / REDO ----
