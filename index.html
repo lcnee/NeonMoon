@@ -384,11 +384,9 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
     <div class="right"><span>배경</span><span class="sep">|</span><span>폰트</span><span class="sep">|</span><span>도트</span><span class="sep">|</span><span>저장</span></div>
   </div>
   <div class="export-menu" id="exportMenu">
-    <button id="expPng">🖼 Export PNG</button>
-    <button id="expJpg">🖼 Export JPG</button>
+    <button id="expPng">🖼 Export Photo</button>
     <button id="expTransparent">🫥 Transparent PNG (no bg)</button>
     <button id="expGif">✨ Motion GIF</button>
-    <button id="expLive">🔴 Live Photo</button>
   </div>
   <div class="export-status-fixed" id="expStatus"></div>
 
@@ -1637,8 +1635,10 @@ async function captureCanvas(forceNoBg){
   // unwanted white border. Restore it right after.
   const prevBorder = stage.style.border;
   const prevBoxShadow = stage.style.boxShadow;
+  const prevBorderRadius = stage.style.borderRadius;
   stage.style.border = 'none';
   stage.style.boxShadow = 'none';
+  stage.style.borderRadius = '0';
 
   await nextFrame();
   let scale = 2;
@@ -1656,6 +1656,7 @@ async function captureCanvas(forceNoBg){
   // restore
   stage.style.border = prevBorder;
   stage.style.boxShadow = prevBoxShadow;
+  stage.style.borderRadius = prevBorderRadius;
   stage.style.width = prevInline.width;
   stage.style.height = prevInline.height;
   stage.style.maxWidth = prevInline.maxWidth;
@@ -1668,12 +1669,15 @@ async function captureCanvas(forceNoBg){
   }
   return canvas;
 }
+// "Export Photo" — PNG is used because it's lossless (JPG's compression
+// blurs sharp text/edges and can't have transparency), so it's simply the
+// better default; no need to make the person choose between two formats.
 document.getElementById('expPng').onclick = async ()=>{
-  setStatus('Exporting PNG...');
+  setStatus('Exporting photo...');
   try{
     const c = await captureCanvas();
     await downloadFile(dataUrlToBlob(c.toDataURL('image/png')), 'neonmoon.png', 'image/png');
-    setStatus('Done! PNG downloaded.');
+    setStatus('Done! Photo downloaded.');
   }catch(err){ setStatus('Export failed, please try again.'); }
 };
 document.getElementById('expTransparent').onclick = async ()=>{
@@ -1682,14 +1686,6 @@ document.getElementById('expTransparent').onclick = async ()=>{
     const c = await captureCanvas(true);
     await downloadFile(dataUrlToBlob(c.toDataURL('image/png')), 'neonmoon-transparent.png', 'image/png');
     setStatus('Done! Transparent PNG downloaded.');
-  }catch(err){ setStatus('Export failed, please try again.'); }
-};
-document.getElementById('expJpg').onclick = async ()=>{
-  setStatus('Exporting JPG...');
-  try{
-    const c = await captureCanvas();
-    await downloadFile(dataUrlToBlob(c.toDataURL('image/jpeg',0.92)), 'neonmoon.jpg', 'image/jpeg');
-    setStatus('Done! JPG downloaded.');
   }catch(err){ setStatus('Export failed, please try again.'); }
 };
 
@@ -1736,17 +1732,10 @@ document.getElementById('expGif').onclick = async ()=>{
   }catch(err){ setStatus('GIF render failed, please try again.'); }
 };
 
-// "Live Photo" — reuses the exact same short burst-capture animation as
-// Motion GIF (a GIF is the only animated format we can reliably build and
-// download from the browser), just packaged/labelled like a Live Photo.
-document.getElementById('expLive').onclick = async ()=>{
-  setStatus('Rendering Live Photo...');
-  try{
-    const blob = await renderMotionGif();
-    await downloadFile(blob, 'neonmoon-live.gif', 'image/gif');
-    setStatus('Done! Live Photo (GIF) downloaded.');
-  }catch(err){ setStatus('Live Photo render failed, please try again.'); }
-};
+// "Live Photo" export was removed: browsers cannot produce a real Apple
+// Live Photo (that's a paired HEIC image + MOV video, assembled by iOS),
+// so it was just re-labeling this same Motion GIF — no real difference,
+// which is why it looked identical and didn't add anything.
 
 // ---- UNDO / REDO ----
 let historyStack = [];
