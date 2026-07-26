@@ -146,7 +146,8 @@ body::after{
 .export-menu.open{display:flex;}
 .export-menu button{padding:10px 12px;border-radius:10px;border:none;background:#fff;font-size:12.5px;color:var(--gray);font-weight:600;text-align:left;}
 .export-menu button:hover{background:#fafafa;}
-.export-status-fixed{font-size:10.5px;color:var(--neon1);text-align:right;padding:0 14px;min-height:14px;}
+.export-status-fixed{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;font-size:13px;font-weight:700;color:#fff;background:rgba(20,20,30,0.85);text-align:center;padding:8px 16px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:88vw;min-height:14px;pointer-events:none;}
+.export-status-fixed:empty{display:none;}
 
 .breadcrumb-bar{
   display:flex;align-items:center;gap:6px;flex-wrap:wrap;
@@ -387,13 +388,14 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
     <button id="expPng">🖼 Export Photo</button>
     <button id="expTransparent">🫥 Transparent PNG (no bg)</button>
     <button id="expGif">✨ Motion GIF</button>
+    <button id="expVideo">🎥 Export Video</button>
   </div>
   <div class="export-status-fixed" id="expStatus"></div>
 
   <div class="maintabs">
     <button type="button" class="maintab-btn bg-menu-btn" id="bgMenuBtn">📷 Upload</button>
     <button class="maintab-btn active" data-tab="t1">Dot & Text</button>
-    <button class="maintab-btn" data-tab="t2">Neon Text</button>
+    <button class="maintab-btn" data-tab="t2">Shape Text</button>
     <button class="maintab-btn" data-tab="t3">Text + Image</button>
     <div class="bg-menu" id="bgMenu">
       <button type="button" id="bgMenuImage">📷 Choose image</button>
@@ -430,6 +432,13 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
       <div class="section-title">Color preset</div>
       <div class="preset-row" id="presetRow1"></div>
       <div class="row"><input type="text" id="dotText" placeholder="Type text..."></div>
+      <div class="section-title">Layout</div>
+      <div class="chip-row chip-row-wrap" id="dotLayoutRow">
+        <button class="chip active" data-v="scatter">🔀 Scatter</button>
+        <button class="chip" data-v="number">🔢 Number</button>
+        <button class="chip" data-v="spiral">🌀 Spiral</button>
+      </div>
+      <div class="row" id="dotNumberRow" style="display:none;"><label class="small">Shape</label><input type="text" id="dotNumberInput" placeholder="e.g. 28" maxlength="6"></div>
       <div class="row">
         <label class="small">Font</label>
         <select id="dotFont">
@@ -464,6 +473,7 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
         <button class="chip" data-v="square">■ Square</button>
         <button class="chip" data-v="flower">✿ Flower</button>
         <button class="chip" data-v="drop">💧 Drop</button>
+        <button class="chip" data-v="house">🏠 House</button>
       </div>
       <div class="hint">Changing shape instantly applies to all existing dots.</div>
     </div>
@@ -478,6 +488,7 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
         <button class="chip polka-shape-chip" data-v="star">★</button>
         <button class="chip polka-shape-chip" data-v="square">■</button>
         <button class="chip polka-shape-chip" data-v="drop">💧</button>
+        <button class="chip polka-shape-chip" data-v="house">🏠</button>
       </div>
       <div class="chip-row chip-row-wrap">
         <button class="chip polka-layout-chip active" data-v="full">Full canvas</button>
@@ -775,6 +786,7 @@ function shapeSVG(shape, color, size, outline){
         <circle cx="50" cy="50" r="13"/>
       </g>`; break;
     case 'drop': inner=`<path d="M50 6 C68 34 84 54 84 70 C84 89 68 96 50 96 C32 96 16 89 16 70 C16 54 32 34 50 6Z" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`; break;
+    case 'house': inner=`<g fill="${fill}" stroke="${stroke}" stroke-width="${sw}"><path d="M50 8 L92 42 L82 42 L82 92 L18 92 L18 42 L8 42Z"/></g>`; break;
     default: inner=`<circle cx="50" cy="50" r="42" fill="${fill}"/>`;
   }
   return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="display:block;">${inner}</svg>`;
@@ -881,25 +893,249 @@ function repaintDots(){
   });
 }
 
+// --- Layout: arrange dots into a number's shape, or along a spiral, instead of random scatter ---
+function currentDotLayout(){
+  const active = document.querySelector('#dotLayoutRow .chip.active');
+  return active ? active.dataset.v : 'scatter';
+}
+document.querySelectorAll('#dotLayoutRow .chip').forEach(c=>{
+  c.onclick = ()=>{
+    document.querySelectorAll('#dotLayoutRow .chip').forEach(x=>x.classList.remove('active'));
+    c.classList.add('active');
+    document.getElementById('dotNumberRow').style.display = (c.dataset.v==='number') ? 'flex' : 'none';
+    scatterDots();
+  };
+});
+document.getElementById('dotNumberInput').addEventListener('input', scatterDots);
+
+// Renders the number/text as a THIN outline and returns a boolean ink mask,
+// so we can trace it as a single-pixel-wide path rather than a filled area.
+function getInkMask(str){
+  const size = 400;
+  const c = document.createElement('canvas');
+  c.width = size; c.height = size;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,size,size);
+  ctx.font = '900 '+Math.floor(size*0.85)+'px "Arial Black", Arial, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.strokeStyle = '#000';
+  ctx.lineWidth = Math.max(2, size*0.016); // a true thin line, not a thick band
+  ctx.lineJoin = 'round';
+  ctx.strokeText(str, size/2, size/2 + size*0.04);
+  const data = ctx.getImageData(0,0,size,size).data;
+  const mask = new Uint8Array(size*size);
+  for(let y=0;y<size;y++){
+    for(let x=0;x<size;x++){
+      if(data[(y*size+x)*4+3] > 128) mask[y*size+x] = 1;
+    }
+  }
+  return {mask, size};
+}
+
+// Groups ink pixels into separate strokes (e.g. the two loops of "8", the dot
+// on an "i") via 8-connected flood fill, since each needs its own necklace strand.
+function findInkComponents(mask, size){
+  const visited = new Uint8Array(size*size);
+  const comps = [];
+  for(let y=0;y<size;y++){
+    for(let x=0;x<size;x++){
+      const idx = y*size+x;
+      if(mask[idx] && !visited[idx]){
+        const comp = [];
+        const stack = [idx];
+        visited[idx] = 1;
+        while(stack.length){
+          const cur = stack.pop();
+          const cy = (cur/size)|0, cx = cur % size;
+          comp.push({x:cx, y:cy});
+          for(let dy=-1;dy<=1;dy++){
+            for(let dx=-1;dx<=1;dx++){
+              if(!dx && !dy) continue;
+              const nx=cx+dx, ny=cy+dy;
+              if(nx>=0 && nx<size && ny>=0 && ny<size){
+                const nidx = ny*size+nx;
+                if(mask[nidx] && !visited[nidx]){ visited[nidx]=1; stack.push(nidx); }
+              }
+            }
+          }
+        }
+        if(comp.length > 3) comps.push(comp);
+      }
+    }
+  }
+  return comps;
+}
+
+// Orders a stroke's pixels into a walkable path by repeatedly hopping to the
+// nearest remaining pixel — traces the line from one end to the other.
+function orderPixelsIntoChain(points){
+  const remaining = points.slice().sort((a,b)=> (a.y-b.y) || (a.x-b.x));
+  const chain = [remaining.shift()];
+  while(remaining.length){
+    const last = chain[chain.length-1];
+    let bestIdx = 0, bestD = Infinity;
+    for(let i=0;i<remaining.length;i++){
+      const dx = remaining[i].x-last.x, dy = remaining[i].y-last.y;
+      const d = dx*dx+dy*dy;
+      if(d < bestD){ bestD = d; bestIdx = i; }
+    }
+    chain.push(remaining.splice(bestIdx,1)[0]);
+  }
+  return chain;
+}
+
+function chainLength(chain){
+  let len = 0;
+  for(let i=1;i<chain.length;i++){
+    len += Math.hypot(chain[i].x-chain[i-1].x, chain[i].y-chain[i-1].y);
+  }
+  return len;
+}
+
+// Places `count` points evenly spaced along the chain's arc length — like
+// beads threaded one after another along a string of a known length.
+function resampleChainEvenly(chain, count){
+  if(count <= 0) return [];
+  if(chain.length === 1) return new Array(count).fill(chain[0]);
+  const total = chainLength(chain);
+  if(total === 0) return new Array(count).fill(chain[0]);
+  const out = [chain[0]];
+  const step = count > 1 ? total/(count-1) : 0;
+  let acc = 0, segIdx = 0;
+  for(let i=1;i<count;i++){
+    const target = i*step;
+    while(segIdx < chain.length-1){
+      const a = chain[segIdx], b = chain[segIdx+1];
+      const segLen = Math.hypot(b.x-a.x, b.y-a.y);
+      if(acc+segLen >= target || segIdx === chain.length-2){
+        const remain = target-acc;
+        const t = segLen > 0 ? Math.min(1, remain/segLen) : 0;
+        out.push({x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t});
+        break;
+      }
+      acc += segLen;
+      segIdx++;
+    }
+  }
+  return out;
+}
+
+// Traces the number/text's outline and threads exactly n beads evenly along
+// it — a single-strand necklace shape, not a filled scatter.
+function sampleShapePoints(str, n){
+  const {mask, size} = getInkMask(str);
+  const comps = findInkComponents(mask, size);
+  if(!comps.length) return [];
+  const chains = comps.map(orderPixelsIntoChain);
+  const lengths = chains.map(chainLength);
+  const totalLen = lengths.reduce((a,b)=>a+b,0) || 1;
+
+  // Split the n beads across strokes proportional to each stroke's length
+  // (so e.g. the loops of an "8" both get a fair, proportionate share).
+  let allocs = lengths.map(l => Math.max(1, Math.round(n*l/totalLen)));
+  let diff = n - allocs.reduce((a,b)=>a+b,0);
+  while(diff !== 0 && allocs.length){
+    let idx = 0, maxL = -1;
+    for(let i=0;i<lengths.length;i++){ if(lengths[i] > maxL){ maxL = lengths[i]; idx = i; } }
+    allocs[idx] += diff > 0 ? 1 : -1;
+    allocs[idx] = Math.max(1, allocs[idx]);
+    diff += diff > 0 ? -1 : 1;
+  }
+
+  const pts = [];
+  chains.forEach((chain,i)=>{
+    resampleChainEvenly(chain, allocs[i]).forEach(p => pts.push({x:p.x/size, y:p.y/size}));
+  });
+  return pts;
+}
+
+function layoutNumberDots(chars, n){
+  const shapeStr = (document.getElementById('dotNumberInput').value || '8').trim() || '8';
+  const pts = sampleShapePoints(shapeStr, n);
+  placedDots = [];
+  for(let i=0;i<n;i++){
+    const p = pts[i] || {x:0.5,y:0.5};
+    placedDots.push({
+      leftPct: Math.min(97, Math.max(3, p.x*100)),
+      topPct: Math.min(97, Math.max(3, p.y*100)),
+      char: chars[i] || null
+    });
+  }
+}
+
+function layoutSpiralDots(chars, n){
+  placedDots = [];
+  const turns = 2.5;
+  const maxR = 44; // percent, keeps spiral inside the stage
+  for(let i=0;i<n;i++){
+    const t = n<=1 ? 0 : i/(n-1);
+    const angle = t * turns * 2 * Math.PI;
+    const r = t * maxR;
+    const leftPct = 50 + r*Math.cos(angle);
+    const topPct = 50 + r*Math.sin(angle);
+    placedDots.push({
+      leftPct: Math.min(97, Math.max(3, leftPct)),
+      topPct: Math.min(97, Math.max(3, topPct)),
+      char: chars[i] || null
+    });
+  }
+}
+
 // scatter dots so reading order (left→right by index) is preserved, but position looks random/clustered/overlapping
 function scatterDots(){
   const text = document.getElementById('dotText').value.replace(/\s+/g,'').trim();
   const chars = text.length ? text.split('') : [];
   const count = parseInt(document.getElementById('dotCount').value);
-  placedDots = [];
   const n = Math.max(count, chars.length);
-  const bandCenter = 35 + Math.random()*30;
-  const slot = 92/Math.max(n,1);
-  for(let i=0;i<n;i++){
-    const baseLeft = 4 + slot*(i+0.5);
-    const jitter = (Math.random()-0.5) * slot * 0.7; // keep jitter smaller than slot so order is preserved
-    const leftPct = Math.min(97, Math.max(3, baseLeft + jitter));
-    const topPct = Math.min(94, Math.max(6, bandCenter + (Math.random()-0.5)*60));
-    placedDots.push({leftPct, topPct, char: chars[i] || null});
+  const layout = currentDotLayout();
+
+  if(layout === 'number'){
+    layoutNumberDots(chars, n);
+    autoFitDotSizeToSpacing();
+  } else if(layout === 'spiral'){
+    layoutSpiralDots(chars, n);
+    autoFitDotSizeToSpacing();
+  } else {
+    placedDots = [];
+    const bandCenter = 35 + Math.random()*30;
+    const slot = 92/Math.max(n,1);
+    for(let i=0;i<n;i++){
+      const baseLeft = 4 + slot*(i+0.5);
+      const jitter = (Math.random()-0.5) * slot * 0.7; // keep jitter smaller than slot so order is preserved
+      const leftPct = Math.min(97, Math.max(3, baseLeft + jitter));
+      const topPct = Math.min(94, Math.max(6, bandCenter + (Math.random()-0.5)*60));
+      placedDots.push({leftPct, topPct, char: chars[i] || null});
+    }
   }
   repaintDots();
   renderPolka();
   pushHistory();
+}
+
+// Number/Spiral layouts space bead CENTERS evenly along a path — but if the
+// bead diameter (Dot size slider) is bigger than that spacing, beads still
+// visually overlap into a blob even though their centers are perfectly even.
+// This shrinks the bead size to match the actual gap between neighboring
+// beads, so they sit edge-to-edge like a real necklace instead of piling up.
+function autoFitDotSizeToSpacing(){
+  if(placedDots.length < 2) return;
+  const stageW = stage.clientWidth || 320;
+  let totalDist = 0, count = 0;
+  for(let i=1;i<placedDots.length;i++){
+    const a = placedDots[i-1], b = placedDots[i];
+    const dx = (b.leftPct-a.leftPct)/100*stageW;
+    const dy = (b.topPct-a.topPct)/100*stageW;
+    const d = Math.hypot(dx,dy);
+    // ignore big jumps (gaps between separate strokes, e.g. the two loops of "8")
+    if(d > 0 && d < stageW*0.3){ totalDist += d; count++; }
+  }
+  if(!count) return;
+  const avgSpacing = totalDist/count;
+  const sizeInput = document.getElementById('dotSize');
+  const newSize = Math.round(Math.min(parseInt(sizeInput.max), Math.max(parseInt(sizeInput.min), avgSpacing*1.05)));
+  sizeInput.value = newSize;
+  document.getElementById('dotSizeVal').textContent = newSize;
 }
 function clearDots(){ placedDots=[]; repaintDots(); pushHistory(); }
 
@@ -1703,13 +1939,21 @@ function toFixedSizeCanvas(srcCanvas, targetW, targetH){
   return out;
 }
 
-async function renderMotionGif(){
+// Video export: unlike GIF, a video file plays as real motion in the iOS
+// Photos app (and everywhere else), so this is the format to reach for
+// when the GIF "doesn't move" after saving to the album.
+async function captureFrameSequence(){
   const frames = 14;
   const captured = [];
   for(let i=0;i<frames;i++){
     captured.push(await captureCanvas());
     await new Promise(r=>setTimeout(r,90));
   }
+  return captured;
+}
+
+async function renderMotionGif(){
+  const captured = await captureFrameSequence();
   // Use the actual pixel size of the first captured frame as the GIF's
   // declared size, then normalize every frame to match it exactly.
   const gifW = captured[0].width, gifH = captured[0].height;
@@ -1723,6 +1967,45 @@ async function renderMotionGif(){
   });
 }
 
+async function renderMotionVideo(){
+  if(typeof MediaRecorder === 'undefined'){
+    throw new Error('This browser cannot record video.');
+  }
+  const captured = await captureFrameSequence();
+  const w = captured[0].width, h = captured[0].height;
+  const out = document.createElement('canvas');
+  out.width = w; out.height = h;
+  const ctx = out.getContext('2d');
+  ctx.drawImage(toFixedSizeCanvas(captured[0], w, h), 0, 0);
+
+  const stream = out.captureStream ? out.captureStream(10) : null;
+  if(!stream) throw new Error('This browser cannot capture a canvas stream.');
+
+  const mimeCandidates = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
+  const mimeType = mimeCandidates.find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m));
+  if(!mimeType) throw new Error('No supported video format found.');
+
+  const recorder = new MediaRecorder(stream, {mimeType});
+  const chunks = [];
+  recorder.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
+
+  const done = new Promise(resolve => { recorder.onstop = resolve; });
+  recorder.start();
+
+  // Loop through the captured frames a couple of times so the video isn't
+  // instant, drawing each one for ~110ms to match the GIF's timing.
+  const loops = 2;
+  for(let l=0;l<loops;l++){
+    for(const frame of captured){
+      ctx.drawImage(toFixedSizeCanvas(frame, w, h), 0, 0);
+      await new Promise(r=>setTimeout(r,110));
+    }
+  }
+  recorder.stop();
+  await done;
+  return {blob: new Blob(chunks, {type: mimeType}), mimeType};
+}
+
 document.getElementById('expGif').onclick = async ()=>{
   setStatus('Rendering motion GIF...');
   try{
@@ -1730,6 +2013,18 @@ document.getElementById('expGif').onclick = async ()=>{
     await downloadFile(blob, 'neonmoon-motion.gif', 'image/gif');
     setStatus('Done! Motion GIF downloaded.');
   }catch(err){ setStatus('GIF render failed, please try again.'); }
+};
+
+document.getElementById('expVideo').onclick = async ()=>{
+  setStatus('Rendering video...');
+  try{
+    const {blob, mimeType} = await renderMotionVideo();
+    const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+    await downloadFile(blob, 'neonmoon-motion.'+ext, mimeType);
+    setStatus('Done! Video downloaded — this one plays as real motion in Photos.');
+  }catch(err){
+    setStatus('Video export not supported on this browser — try Motion GIF instead.');
+  }
 };
 
 // "Live Photo" export was removed: browsers cannot produce a real Apple
