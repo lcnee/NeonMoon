@@ -82,7 +82,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gaegu:wght@400;700&family=Jua&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Gaegu:wght@400;700&family=Jua&family=Pinyon+Script&display=swap" rel="stylesheet">
 <style>
 :root{
   --neon1:#ffa8d8; --neon1-light:#fff0f8;
@@ -146,8 +146,7 @@ body::after{
 .export-menu.open{display:flex;}
 .export-menu button{padding:10px 12px;border-radius:10px;border:none;background:#fff;font-size:12.5px;color:var(--gray);font-weight:600;text-align:left;}
 .export-menu button:hover{background:#fafafa;}
-.export-status-fixed{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:9999;font-size:13px;font-weight:700;color:#fff;background:rgba(20,20,30,0.85);text-align:center;padding:8px 16px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,.25);max-width:88vw;min-height:14px;pointer-events:none;}
-.export-status-fixed:empty{display:none;}
+.export-status-fixed{font-size:10.5px;color:var(--neon1);text-align:right;padding:0 14px;min-height:14px;}
 
 .breadcrumb-bar{
   display:flex;align-items:center;gap:6px;flex-wrap:wrap;
@@ -282,16 +281,7 @@ button.ghost{
 .added-item .rm{background:none;border:none;color:#ffb3b3;font-size:16px;padding:0 4px;}
 
 .gap-list{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
-.gap-item{border:1px solid rgba(0,0,0,0.08);border-radius:10px;overflow:hidden;background:rgba(255,255,255,0.6);}
-.gap-item .thumb{border-radius:6px;background:#eee no-repeat center/cover;}
-.gap-item .gap-body{padding:0 8px 8px 8px;}
 .gap-item{display:flex;flex-direction:column;gap:6px;border:none;background:#fff;box-shadow:0 2px 10px rgba(150,120,200,.12);border-radius:14px;padding:8px;font-size:11.5px;}
-.gap-pair-row{display:flex;gap:10px;align-items:center;}
-.gap-pair-row .field{flex:1;display:flex;align-items:center;gap:4px;min-width:0;}
-.gap-pair-row .field label{font-size:10px;color:var(--grayl);flex:none;white-space:nowrap;}
-.gap-pair-row .field input[type=range]{flex:1;min-width:0;}
-.gap-pair-row .field .range-val{flex:none;width:22px;text-align:right;font-size:10px;color:var(--gray);font-weight:700;}
-.gap-pair-row input[type=color]{flex:none;width:30px;height:26px;padding:0;border:none;border-radius:6px;}
 .gap-item .top{display:flex;align-items:center;gap:8px;}
 .gap-item .thumb{width:28px;height:28px;background:#f2f2f4;background-size:cover;background-position:center;flex:none;border-radius:6px;}
 .gap-item .lbl{flex:1;color:var(--grayl);}
@@ -342,27 +332,46 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
 }
 .m-drop{animation:dropRollAnim 1.05s ease-out both;}
 .m-rain{animation:rainAnim 1.6s linear infinite;}
+
+/* Mobile editor layout: fixed working area, scrollable tools, bottom navigation */
+.mobile-view-controls{display:none;align-items:center;justify-content:center;gap:9px;margin:10px auto 0}
+.mobile-view-controls button{background:#fff;border:1px solid #ddd5e1;border-radius:12px;padding:7px 15px;font-weight:800;color:#393043;min-height:36px}
+#viewZoomLabel{min-width:45px;text-align:center;font-size:12px;font-weight:800}
+@media(max-width:700px){
+ html,body{height:100%;overflow:hidden;overscroll-behavior:none}
+ .app{height:100dvh;min-height:0;max-width:none;overflow:hidden;padding-bottom:env(safe-area-inset-bottom);box-sizing:border-box}
+ .appbar{flex:none;min-height:48px}
+ .breadcrumb-bar,.tabline-bar{display:none!important}
+ .stage-wrap{flex:1 1 auto;min-height:125px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 10px 5px;overflow:auto;overscroll-behavior:contain}
+ .stage{flex:none;max-width:min(88vw, 43dvh)!important;max-height:calc(100% - 86px)!important;box-sizing:border-box;transform:scale(var(--view-zoom,1));transform-origin:center center}
+ .stage-caption{display:none}
+ .mobile-view-controls{display:flex;flex:none;position:relative;z-index:9}
+ .undo-redo-row{flex:none;margin:5px 0 0}
+ .maintabs{order:3;flex:none;position:relative;z-index:20;background:#fff;padding:7px 8px calc(8px + env(safe-area-inset-bottom));border-top:1px solid #eee3ef;box-shadow:0 -4px 16px #27152a15;gap:5px}
+ .maintab-btn{min-width:0;font-size:clamp(9px,2.7vw,12px);padding:12px 2px;border-radius:13px;white-space:nowrap}
+ .panel{order:2;flex:0 1 38dvh;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:10px 14px 18px;background:#fff;border-radius:18px 18px 0 0}
+ .panel.active{display:block}
+ .subtabs{position:sticky;top:-10px;background:#fff;z-index:12;padding-top:5px}
+ .export-menu{position:fixed;top:52px;right:10px;z-index:1000}
+ input,select,textarea{font-size:16px!important}
+}
+/* Mobile viewport repair: controls centered, navigation always reachable */
+@media(max-width:700px){
+ html,body{margin:0;width:100%;height:100%;height:100dvh;overflow:hidden}
+ .app{height:100dvh!important;min-height:0!important;padding-bottom:0!important;display:flex!important;flex-direction:column!important;overflow:hidden!important}
+ .appbar{order:0;flex:0 0 auto}
+ .stage-wrap{order:1!important;flex:1 1 0!important;min-height:110px!important;overflow:hidden!important;position:relative!important;display:flex!important;flex-direction:column!important;justify-content:center!important;align-items:center!important;padding:12px 8px 86px!important;box-sizing:border-box!important}
+ .stage{max-width:min(92vw, 42dvh)!important;max-height:calc(100% - 18px)!important;margin:auto!important}
+ .mobile-view-controls{position:absolute!important;bottom:44px!important;left:50%!important;transform:translateX(-50%)!important;display:flex!important;align-items:center!important;justify-content:center!important;width:max-content!important;max-width:96%!important;margin:0!important;gap:7px!important}
+ .mobile-view-controls button{min-width:43px;min-height:38px}
+ .undo-redo-row{position:absolute!important;bottom:5px!important;left:50%!important;transform:translateX(-50%)!important;margin:0!important;display:flex!important;gap:10px!important}
+ .panel{order:2!important;flex:0 1 34dvh!important;min-height:110px!important;overflow-y:auto!important;padding-bottom:14px!important}
+ .maintabs{order:3!important;flex:0 0 auto!important;position:relative!important;bottom:auto!important;left:auto!important;right:auto!important;width:100%!important;box-sizing:border-box!important;padding:8px 10px max(12px, env(safe-area-inset-bottom))!important;z-index:100!important;display:flex!important;visibility:visible!important;transform:none!important}
+ .maintab-btn{display:block!important;visibility:visible!important;flex:1 1 0!important;min-height:46px!important;font-size:clamp(11px,3.1vw,14px)!important}
+}
 </style>
 </head>
 <body>
-<script>
-// Some in-app browsers (e.g. Zalo webview) ignore the viewport meta's
-// user-scalable=no / maximum-scale=1.0 and still allow native double-tap
-// zoom. If the user double-taps quickly, the page zooms in and there is
-// no way to zoom back out. Block the double-tap zoom gesture directly.
-(function(){
-  let lastTouchEnd = 0;
-  document.addEventListener('touchend', function(e){
-    const now = Date.now();
-    if (now - lastTouchEnd <= 350) {
-      e.preventDefault();
-    }
-    lastTouchEnd = now;
-  }, {passive:false});
-  // Also block pinch-zoom via gesture events (older iOS Safari/WebKit webviews)
-  document.addEventListener('gesturestart', function(e){ e.preventDefault(); });
-})();
-</script>
 <div class="bg-fade"></div>
 <div class="app">
 
@@ -385,18 +394,18 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
     <div class="right"><span>배경</span><span class="sep">|</span><span>폰트</span><span class="sep">|</span><span>도트</span><span class="sep">|</span><span>저장</span></div>
   </div>
   <div class="export-menu" id="exportMenu">
-    <button id="expPng">🖼 Export Photo</button>
+    <button id="expPng">🖼 Export PNG</button>
+    <button id="expJpg">🖼 Export JPG</button>
     <button id="expTransparent">🫥 Transparent PNG (no bg)</button>
     <button id="expGif">✨ Motion GIF</button>
-    <button id="expVideo">🎥 Export Video</button>
+    <button id="expBA">↔ Before→After GIF</button>
   </div>
   <div class="export-status-fixed" id="expStatus"></div>
 
   <div class="maintabs">
     <button type="button" class="maintab-btn bg-menu-btn" id="bgMenuBtn">📷 Upload</button>
     <button class="maintab-btn active" data-tab="t1">Dot & Text</button>
-    <button class="maintab-btn" data-tab="t2">Shape Text</button>
-    <button class="maintab-btn" data-tab="t3">Text + Image</button>
+    <button class="maintab-btn" data-tab="t2">Neon Text</button>
     <div class="bg-menu" id="bgMenu">
       <button type="button" id="bgMenuImage">📷 Choose image</button>
       <label class="bg-menu-color-row" id="bgMenuColor">🎨 Choose color <input type="color" id="bgColorInput" value="#ffe3f7"></label>
@@ -412,6 +421,12 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
       <div id="imgtextLayer"></div>
       <div id="neonLayer"></div>
       <input type="file" id="bgFile" accept="image/*">
+    </div>
+    <div class="mobile-view-controls" aria-label="Image view controls">
+      <button type="button" id="viewMinus" aria-label="Zoom out">−</button>
+      <button type="button" id="viewFit">Fit</button>
+      <span id="viewZoomLabel">100%</span>
+      <button type="button" id="viewPlus" aria-label="Zoom in">+</button>
     </div>
     <div class="undo-redo-row">
       <button type="button" id="undoBtn" title="Undo">↺</button>
@@ -432,19 +447,14 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
       <div class="section-title">Color preset</div>
       <div class="preset-row" id="presetRow1"></div>
       <div class="row"><input type="text" id="dotText" placeholder="Type text..."></div>
-      <div class="section-title">Layout</div>
-      <div class="chip-row chip-row-wrap" id="dotLayoutRow">
-        <button class="chip active" data-v="scatter">🔀 Scatter</button>
-        <button class="chip" data-v="number">🔢 Number</button>
-        <button class="chip" data-v="spiral">🌀 Spiral</button>
-      </div>
-      <div class="row" id="dotNumberRow" style="display:none;"><label class="small">Shape</label><input type="text" id="dotNumberInput" placeholder="e.g. 28" maxlength="6"></div>
       <div class="row">
         <label class="small">Font</label>
         <select id="dotFont">
           <option value="auto" selected>Cute</option>
           <option value="-apple-system,Arial,sans-serif">Sans</option>
           <option value="Georgia,serif">Serif</option>
+          <option value="'Arial Narrow','Liberation Sans Narrow',Arial,sans-serif">Arial Narrow</option>
+          <option value="'Pinyon Script',cursive">Pinyon Script</option>
           <option value="'Courier New',monospace">Mono</option>
           <option value="'Brush Script MT',cursive">Cursive</option>
         </select>
@@ -473,7 +483,6 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
         <button class="chip" data-v="square">■ Square</button>
         <button class="chip" data-v="flower">✿ Flower</button>
         <button class="chip" data-v="drop">💧 Drop</button>
-        <button class="chip" data-v="house">🏠 House</button>
       </div>
       <div class="hint">Changing shape instantly applies to all existing dots.</div>
     </div>
@@ -488,19 +497,12 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
         <button class="chip polka-shape-chip" data-v="star">★</button>
         <button class="chip polka-shape-chip" data-v="square">■</button>
         <button class="chip polka-shape-chip" data-v="drop">💧</button>
-        <button class="chip polka-shape-chip" data-v="house">🏠</button>
       </div>
-      <div class="chip-row chip-row-wrap">
-        <button class="chip polka-layout-chip active" data-v="full">Full canvas</button>
-        <button class="chip polka-layout-chip" data-v="border">Border (4 sides)</button>
-      </div>
-      <div class="row" id="polkaMarginRow" style="display:none;"><label class="small">Border margin</label><input type="range" id="polkaMargin" min="0" max="40" value="6"><span class="range-val" id="polkaMarginVal">6</span></div>
       <div class="row"><label class="small">Color</label><input type="color" id="polkaColor" value="#22d9ff"></div>
       <div class="row"><label class="small">Size</label><input type="range" id="polkaSize" min="3" max="30" value="8"><span class="range-val" id="polkaSizeVal">8</span></div>
       <div class="row"><label class="small">Spacing</label><input type="range" id="polkaSpace" min="14" max="60" value="26"><span class="range-val" id="polkaSpaceVal">26</span></div>
       <div class="row"><label class="small">Opacity</label><input type="range" id="polkaOpacity" min="10" max="100" value="60"><span class="range-val" id="polkaOpacityVal">60</span></div>
     </div>
-
 
     <div class="subpanel" id="s1d">
       <div class="section-title">Motion — applies instantly</div>
@@ -534,6 +536,8 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
         <select id="neonFont">
           <option value="-apple-system,Arial,sans-serif">Sans</option>
           <option value="Georgia,serif">Serif</option>
+          <option value="'Arial Narrow','Liberation Sans Narrow',Arial,sans-serif">Arial Narrow</option>
+          <option value="'Pinyon Script',cursive">Pinyon Script</option>
           <option value="'Courier New',monospace">Mono</option>
           <option value="'Brush Script MT',cursive">Cursive</option>
         </select>
@@ -549,7 +553,7 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
       <div class="row">
         <button class="chip" id="neonBoxToggle" data-v="off">🗨 Text box</button>
         <input type="color" id="neonBoxColor" value="#ffffff">
-        <input type="range" id="neonBoxOpacity" min="0" max="100" value="90" style="max-width:80px;"><span class="range-val" id="neonBoxOpacityVal">90</span>
+        <input type="range" id="neonBoxOpacity" min="0" max="100" value="100" style="max-width:80px;"><span class="range-val" id="neonBoxOpacityVal">100</span>
       </div>
       <button class="primary" id="addNeonText">＋ Add text (then drag on photo)</button>
       <div class="hint">Tap & drag text right on the preview to move it. Long text auto-wraps to the next line. Tap an added text on the photo to jump to it in Layers.</div>
@@ -589,7 +593,7 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
     </div>
   </div>
 
-  <div class="panel" id="t3">
+  <div class="panel" id="t3" hidden aria-hidden="true" style="display:none!important">
     <div class="subtabs" id="subtabs3">
       <button class="subtab-btn active" data-sub="s3a">Text</button>
       <button class="subtab-btn" data-sub="s3b">Insert images</button>
@@ -603,6 +607,8 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
         <select id="itFont">
           <option value="-apple-system,Arial,sans-serif" selected>Sans</option>
           <option value="Georgia,serif">Serif</option>
+          <option value="'Arial Narrow','Liberation Sans Narrow',Arial,sans-serif">Arial Narrow</option>
+          <option value="'Pinyon Script',cursive">Pinyon Script</option>
           <option value="'Courier New',monospace">Mono</option>
           <option value="'Brush Script MT',cursive">Cursive</option>
           <option value="auto">Cute</option>
@@ -627,8 +633,7 @@ input[type=file]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;ov
 
     <div class="subpanel" id="s3b">
       <div class="hint">Type your text in the "Text" tab first — each gap between words shows up here so you can insert an image.</div>
-      <div class="chip-row chip-row-wrap" id="gapTabs"></div>
-      <div id="gapEditor"></div>
+      <div class="gap-list" id="gapList"></div>
     </div>
 
     <div class="subpanel" id="s3c">
@@ -648,6 +653,8 @@ const dotLayer = document.getElementById('dotLayer');
 const polkaLayer = document.getElementById('polkaLayer');
 const neonLayer = document.getElementById('neonLayer');
 const imgtextLayer = document.getElementById('imgtextLayer');
+// Text + Image retired: keep legacy controls in DOM for compatibility, disable its output.
+imgtextLayer.style.display = 'none';
 
 // ---- generic: show live value next to every range input ----
 document.querySelectorAll('input[type=range]').forEach(r=>{
@@ -786,7 +793,6 @@ function shapeSVG(shape, color, size, outline){
         <circle cx="50" cy="50" r="13"/>
       </g>`; break;
     case 'drop': inner=`<path d="M50 6 C68 34 84 54 84 70 C84 89 68 96 50 96 C32 96 16 89 16 70 C16 54 32 34 50 6Z" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>`; break;
-    case 'house': inner=`<g fill="${fill}" stroke="${stroke}" stroke-width="${sw}"><path d="M50 8 L92 42 L82 42 L82 92 L18 92 L18 42 L8 42Z"/></g>`; break;
     default: inner=`<circle cx="50" cy="50" r="42" fill="${fill}"/>`;
   }
   return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="display:block;">${inner}</svg>`;
@@ -893,249 +899,25 @@ function repaintDots(){
   });
 }
 
-// --- Layout: arrange dots into a number's shape, or along a spiral, instead of random scatter ---
-function currentDotLayout(){
-  const active = document.querySelector('#dotLayoutRow .chip.active');
-  return active ? active.dataset.v : 'scatter';
-}
-document.querySelectorAll('#dotLayoutRow .chip').forEach(c=>{
-  c.onclick = ()=>{
-    document.querySelectorAll('#dotLayoutRow .chip').forEach(x=>x.classList.remove('active'));
-    c.classList.add('active');
-    document.getElementById('dotNumberRow').style.display = (c.dataset.v==='number') ? 'flex' : 'none';
-    scatterDots();
-  };
-});
-document.getElementById('dotNumberInput').addEventListener('input', scatterDots);
-
-// Renders the number/text as a THIN outline and returns a boolean ink mask,
-// so we can trace it as a single-pixel-wide path rather than a filled area.
-function getInkMask(str){
-  const size = 400;
-  const c = document.createElement('canvas');
-  c.width = size; c.height = size;
-  const ctx = c.getContext('2d');
-  ctx.clearRect(0,0,size,size);
-  ctx.font = '900 '+Math.floor(size*0.85)+'px "Arial Black", Arial, sans-serif';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.strokeStyle = '#000';
-  ctx.lineWidth = Math.max(2, size*0.016); // a true thin line, not a thick band
-  ctx.lineJoin = 'round';
-  ctx.strokeText(str, size/2, size/2 + size*0.04);
-  const data = ctx.getImageData(0,0,size,size).data;
-  const mask = new Uint8Array(size*size);
-  for(let y=0;y<size;y++){
-    for(let x=0;x<size;x++){
-      if(data[(y*size+x)*4+3] > 128) mask[y*size+x] = 1;
-    }
-  }
-  return {mask, size};
-}
-
-// Groups ink pixels into separate strokes (e.g. the two loops of "8", the dot
-// on an "i") via 8-connected flood fill, since each needs its own necklace strand.
-function findInkComponents(mask, size){
-  const visited = new Uint8Array(size*size);
-  const comps = [];
-  for(let y=0;y<size;y++){
-    for(let x=0;x<size;x++){
-      const idx = y*size+x;
-      if(mask[idx] && !visited[idx]){
-        const comp = [];
-        const stack = [idx];
-        visited[idx] = 1;
-        while(stack.length){
-          const cur = stack.pop();
-          const cy = (cur/size)|0, cx = cur % size;
-          comp.push({x:cx, y:cy});
-          for(let dy=-1;dy<=1;dy++){
-            for(let dx=-1;dx<=1;dx++){
-              if(!dx && !dy) continue;
-              const nx=cx+dx, ny=cy+dy;
-              if(nx>=0 && nx<size && ny>=0 && ny<size){
-                const nidx = ny*size+nx;
-                if(mask[nidx] && !visited[nidx]){ visited[nidx]=1; stack.push(nidx); }
-              }
-            }
-          }
-        }
-        if(comp.length > 3) comps.push(comp);
-      }
-    }
-  }
-  return comps;
-}
-
-// Orders a stroke's pixels into a walkable path by repeatedly hopping to the
-// nearest remaining pixel — traces the line from one end to the other.
-function orderPixelsIntoChain(points){
-  const remaining = points.slice().sort((a,b)=> (a.y-b.y) || (a.x-b.x));
-  const chain = [remaining.shift()];
-  while(remaining.length){
-    const last = chain[chain.length-1];
-    let bestIdx = 0, bestD = Infinity;
-    for(let i=0;i<remaining.length;i++){
-      const dx = remaining[i].x-last.x, dy = remaining[i].y-last.y;
-      const d = dx*dx+dy*dy;
-      if(d < bestD){ bestD = d; bestIdx = i; }
-    }
-    chain.push(remaining.splice(bestIdx,1)[0]);
-  }
-  return chain;
-}
-
-function chainLength(chain){
-  let len = 0;
-  for(let i=1;i<chain.length;i++){
-    len += Math.hypot(chain[i].x-chain[i-1].x, chain[i].y-chain[i-1].y);
-  }
-  return len;
-}
-
-// Places `count` points evenly spaced along the chain's arc length — like
-// beads threaded one after another along a string of a known length.
-function resampleChainEvenly(chain, count){
-  if(count <= 0) return [];
-  if(chain.length === 1) return new Array(count).fill(chain[0]);
-  const total = chainLength(chain);
-  if(total === 0) return new Array(count).fill(chain[0]);
-  const out = [chain[0]];
-  const step = count > 1 ? total/(count-1) : 0;
-  let acc = 0, segIdx = 0;
-  for(let i=1;i<count;i++){
-    const target = i*step;
-    while(segIdx < chain.length-1){
-      const a = chain[segIdx], b = chain[segIdx+1];
-      const segLen = Math.hypot(b.x-a.x, b.y-a.y);
-      if(acc+segLen >= target || segIdx === chain.length-2){
-        const remain = target-acc;
-        const t = segLen > 0 ? Math.min(1, remain/segLen) : 0;
-        out.push({x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t});
-        break;
-      }
-      acc += segLen;
-      segIdx++;
-    }
-  }
-  return out;
-}
-
-// Traces the number/text's outline and threads exactly n beads evenly along
-// it — a single-strand necklace shape, not a filled scatter.
-function sampleShapePoints(str, n){
-  const {mask, size} = getInkMask(str);
-  const comps = findInkComponents(mask, size);
-  if(!comps.length) return [];
-  const chains = comps.map(orderPixelsIntoChain);
-  const lengths = chains.map(chainLength);
-  const totalLen = lengths.reduce((a,b)=>a+b,0) || 1;
-
-  // Split the n beads across strokes proportional to each stroke's length
-  // (so e.g. the loops of an "8" both get a fair, proportionate share).
-  let allocs = lengths.map(l => Math.max(1, Math.round(n*l/totalLen)));
-  let diff = n - allocs.reduce((a,b)=>a+b,0);
-  while(diff !== 0 && allocs.length){
-    let idx = 0, maxL = -1;
-    for(let i=0;i<lengths.length;i++){ if(lengths[i] > maxL){ maxL = lengths[i]; idx = i; } }
-    allocs[idx] += diff > 0 ? 1 : -1;
-    allocs[idx] = Math.max(1, allocs[idx]);
-    diff += diff > 0 ? -1 : 1;
-  }
-
-  const pts = [];
-  chains.forEach((chain,i)=>{
-    resampleChainEvenly(chain, allocs[i]).forEach(p => pts.push({x:p.x/size, y:p.y/size}));
-  });
-  return pts;
-}
-
-function layoutNumberDots(chars, n){
-  const shapeStr = (document.getElementById('dotNumberInput').value || '8').trim() || '8';
-  const pts = sampleShapePoints(shapeStr, n);
-  placedDots = [];
-  for(let i=0;i<n;i++){
-    const p = pts[i] || {x:0.5,y:0.5};
-    placedDots.push({
-      leftPct: Math.min(97, Math.max(3, p.x*100)),
-      topPct: Math.min(97, Math.max(3, p.y*100)),
-      char: chars[i] || null
-    });
-  }
-}
-
-function layoutSpiralDots(chars, n){
-  placedDots = [];
-  const turns = 2.5;
-  const maxR = 44; // percent, keeps spiral inside the stage
-  for(let i=0;i<n;i++){
-    const t = n<=1 ? 0 : i/(n-1);
-    const angle = t * turns * 2 * Math.PI;
-    const r = t * maxR;
-    const leftPct = 50 + r*Math.cos(angle);
-    const topPct = 50 + r*Math.sin(angle);
-    placedDots.push({
-      leftPct: Math.min(97, Math.max(3, leftPct)),
-      topPct: Math.min(97, Math.max(3, topPct)),
-      char: chars[i] || null
-    });
-  }
-}
-
 // scatter dots so reading order (left→right by index) is preserved, but position looks random/clustered/overlapping
 function scatterDots(){
   const text = document.getElementById('dotText').value.replace(/\s+/g,'').trim();
   const chars = text.length ? text.split('') : [];
   const count = parseInt(document.getElementById('dotCount').value);
+  placedDots = [];
   const n = Math.max(count, chars.length);
-  const layout = currentDotLayout();
-
-  if(layout === 'number'){
-    layoutNumberDots(chars, n);
-    autoFitDotSizeToSpacing();
-  } else if(layout === 'spiral'){
-    layoutSpiralDots(chars, n);
-    autoFitDotSizeToSpacing();
-  } else {
-    placedDots = [];
-    const bandCenter = 35 + Math.random()*30;
-    const slot = 92/Math.max(n,1);
-    for(let i=0;i<n;i++){
-      const baseLeft = 4 + slot*(i+0.5);
-      const jitter = (Math.random()-0.5) * slot * 0.7; // keep jitter smaller than slot so order is preserved
-      const leftPct = Math.min(97, Math.max(3, baseLeft + jitter));
-      const topPct = Math.min(94, Math.max(6, bandCenter + (Math.random()-0.5)*60));
-      placedDots.push({leftPct, topPct, char: chars[i] || null});
-    }
+  const bandCenter = 35 + Math.random()*30;
+  const slot = 92/Math.max(n,1);
+  for(let i=0;i<n;i++){
+    const baseLeft = 4 + slot*(i+0.5);
+    const jitter = (Math.random()-0.5) * slot * 0.7; // keep jitter smaller than slot so order is preserved
+    const leftPct = Math.min(97, Math.max(3, baseLeft + jitter));
+    const topPct = Math.min(94, Math.max(6, bandCenter + (Math.random()-0.5)*60));
+    placedDots.push({leftPct, topPct, char: chars[i] || null});
   }
   repaintDots();
   renderPolka();
   pushHistory();
-}
-
-// Number/Spiral layouts space bead CENTERS evenly along a path — but if the
-// bead diameter (Dot size slider) is bigger than that spacing, beads still
-// visually overlap into a blob even though their centers are perfectly even.
-// This shrinks the bead size to match the actual gap between neighboring
-// beads, so they sit edge-to-edge like a real necklace instead of piling up.
-function autoFitDotSizeToSpacing(){
-  if(placedDots.length < 2) return;
-  const stageW = stage.clientWidth || 320;
-  let totalDist = 0, count = 0;
-  for(let i=1;i<placedDots.length;i++){
-    const a = placedDots[i-1], b = placedDots[i];
-    const dx = (b.leftPct-a.leftPct)/100*stageW;
-    const dy = (b.topPct-a.topPct)/100*stageW;
-    const d = Math.hypot(dx,dy);
-    // ignore big jumps (gaps between separate strokes, e.g. the two loops of "8")
-    if(d > 0 && d < stageW*0.3){ totalDist += d; count++; }
-  }
-  if(!count) return;
-  const avgSpacing = totalDist/count;
-  const sizeInput = document.getElementById('dotSize');
-  const newSize = Math.round(Math.min(parseInt(sizeInput.max), Math.max(parseInt(sizeInput.min), avgSpacing*1.05)));
-  sizeInput.value = newSize;
-  document.getElementById('dotSizeVal').textContent = newSize;
 }
 function clearDots(){ placedDots=[]; repaintDots(); pushHistory(); }
 
@@ -1179,18 +961,6 @@ document.querySelectorAll('.polka-shape-chip').forEach(c=>{
     renderPolka();
   };
 });
-document.querySelectorAll('.polka-layout-chip').forEach(c=>{
-  c.onclick=()=>{
-    document.querySelectorAll('.polka-layout-chip').forEach(x=>x.classList.remove('active'));
-    c.classList.add('active');
-    document.getElementById('polkaMarginRow').style.display = (c.dataset.v==='border') ? 'flex' : 'none';
-    renderPolka();
-  };
-});
-document.getElementById('polkaMargin').addEventListener('input', ()=>{
-  document.getElementById('polkaMarginVal').textContent = document.getElementById('polkaMargin').value;
-  renderPolka();
-});
 
 let drawMode = false;
 drawToggle.addEventListener('click', ()=>{
@@ -1227,39 +997,6 @@ function renderPolka(){
   polkaLayer.style.opacity = opacity;
   const stageW = stage.clientWidth || 320;
   const stageH = stage.clientHeight || stageW;
-
-  const layoutActive = document.querySelector('.polka-layout-chip.active');
-  const layout = layoutActive ? layoutActive.dataset.v : 'full';
-
-  if(layout==='border'){
-    const margin = parseInt(document.getElementById('polkaMargin').value);
-    const placeDot = (x,y)=>{
-      const d=document.createElement('div');
-      d.style.position='absolute';
-      d.style.left=(x-size/2)+'px'; d.style.top=(y-size/2)+'px';
-      d.style.width=size+'px'; d.style.height=size+'px';
-      d.innerHTML=shapeSVG(shape,color,size,false);
-      polkaLayer.appendChild(d);
-    };
-    const left = margin, top = margin;
-    const w = Math.max(0, stageW - margin*2);
-    const h = Math.max(0, stageH - margin*2);
-    const perimeter = 2*(w+h);
-    if(perimeter <= 0) return;
-    const count = Math.max(4, Math.round(perimeter/spacing));
-    const step = perimeter/count;
-    for(let i=0;i<count;i++){
-      const dist = i*step;
-      let x,y;
-      if(dist <= w){ x=left+dist; y=top; }
-      else if(dist <= w+h){ x=left+w; y=top+(dist-w); }
-      else if(dist <= 2*w+h){ x=left+w-(dist-w-h); y=top+h; }
-      else { x=left; y=top+h-(dist-2*w-h); }
-      placeDot(x,y);
-    }
-    return;
-  }
-
   const cols = Math.ceil(stageW/spacing)+2;
   const rows = Math.ceil(stageH/spacing)+2;
   for(let r=0;r<rows;r++){
@@ -1411,14 +1148,16 @@ function renderNeon(){
     box.style.left = nt.left+'%'; box.style.top = nt.top+'%';
     box.style.transform='translate(-50%,-50%)';
     box.style.display='flex';
-    box.style.flexWrap='wrap';
+    box.style.flexWrap='nowrap';
+    box.style.whiteSpace='pre';
+    box.style.width='max-content';
     box.style.alignItems='center';
     box.style.justifyContent='center';
-    box.style.maxWidth = '85%';
+    box.style.maxWidth = 'none';
     box.style.textAlign='center';
     if(nt.box){
       const rgb = hexToRgb(nt.boxColor||'#ffffff');
-      box.style.background = `rgba(${rgb.r},${rgb.g},${rgb.b},${nt.boxOpacity!=null?nt.boxOpacity:0.9})`;
+      box.style.background = `rgba(${rgb.r},${rgb.g},${rgb.b},${nt.boxOpacity!=null?nt.boxOpacity:1})`;
       box.style.padding = '6px 10px';
       box.style.borderRadius = '0';
       box.style.boxShadow = 'none';
@@ -1526,7 +1265,7 @@ function readItSettings(){
   itState.color = document.getElementById('itColor').value;
   itState.font = document.getElementById('itFont').value;
   const words = flattenWords(itState.text);
-  itState.gaps = words.map((w,i)=> itState.gaps[i] || {img:null, size:100, radius:0, borderW:0, borderColor:'#ffffff', heightPct:100, widthPct:100, posX:50, posY:50, type:'image', emoji:'😊'});
+  itState.gaps = words.map((w,i)=> itState.gaps[i] || {img:null, size:100, radius:0, borderW:0, borderColor:'#ffffff', heightPct:100});
 }
 
 ['itText','itAlign','itSize','itLetter','itLine','itColor','itFont'].forEach(id=>{
@@ -1546,125 +1285,48 @@ document.getElementById('groupScale').addEventListener('input', e=>{
   renderImgText();
 });
 
-let gapActiveIndex = 0;
 function buildGapList(words){
-  const tabsEl = document.getElementById('gapTabs');
-  const editorEl = document.getElementById('gapEditor');
-  if(gapActiveIndex >= words.length) gapActiveIndex = Math.max(0, words.length-1);
-  const quickEmojis = ['🍀','⭐️','❤️','✨','🕥','🐰','🤍','👽','👀','🧤','🍎','🍏','🥝','🥑','🍥','🍧','🎂','🧃','🥤','🎱','🎹','🎼','🎧','🎸','🧩','🧸','🎀','🎐'];
-
-  // --- tab row (styled like the main Text / Insert images / Resize all bar) ---
-  tabsEl.innerHTML='';
+  const list = document.getElementById('gapList');
+  list.innerHTML='';
   words.forEach((w,i)=>{
-    const btn = document.createElement('button');
-    btn.className = 'chip gap-tab-chip' + (i===gapActiveIndex ? ' active' : '');
-    btn.textContent = w;
-    btn.onclick = ()=>{ gapActiveIndex = i; buildGapList(flattenWords(itState.text)); };
-    tabsEl.appendChild(btn);
-  });
-
-  // --- editor for the selected gap only ---
-  editorEl.innerHTML='';
-  if(!words.length) return;
-  const i = gapActiveIndex;
-  const w = words[i];
-  const g = itState.gaps[i];
-  if(!g.type) g.type = 'image';
-  const isEmoji = g.type === 'emoji';
-  const row = document.createElement('div');
-  row.className = 'gap-item';
-  row.innerHTML = `
-    <div class="top">
-      <div class="thumb" id="thumb${i}" style="${(!isEmoji && g.img)?`background-image:url(${g.img});background-size:cover;`:''}${isEmoji?`display:flex;align-items:center;justify-content:center;font-size:22px;`:''}">${isEmoji ? (g.emoji||'') : ''}</div>
-      <div class="lbl">after "${w}"</div>
-    </div>
-    <div class="chip-row" style="margin:4px 0;">
-      <button class="chip gapType-chip ${!isEmoji?'active':''}" data-v="image">🖼 Image</button>
-      <button class="chip gapType-chip ${isEmoji?'active':''}" data-v="emoji">😊 Emoji</button>
-    </div>
-    <div class="gap-pair-row" style="margin-bottom:8px;">
-      <div class="field"><label>Size</label><input type="range" id="gapSize${i}" min="40" max="220" value="${g.size}"><span class="range-val" id="gapSize${i}Val">${g.size}</span></div>
-    </div>
-    <div class="gap-image-controls" id="gapImageControls${i}" style="${isEmoji?'display:none;':''}">
-      <div class="row" style="margin-bottom:0;">
+    const row = document.createElement('div');
+    row.className='gap-item';
+    const g = itState.gaps[i];
+    row.innerHTML = `
+      <div class="top">
+        <div class="thumb" id="thumb${i}" style="${g.img?`background-image:url(${g.img})`:''}"></div>
+        <div class="lbl">after "${w}"</div>
         <button class="file-btn" type="button" id="gapBtn${i}">Choose image</button>
         <input type="file" accept="image/*" id="gapInput${i}">
       </div>
-    </div>
-    <div class="gap-emoji-controls" id="gapEmojiControls${i}" style="${isEmoji?'':'display:none;'}">
-      <div class="row" style="margin-bottom:4px;">
-        <input type="text" id="gapEmoji${i}" value="${g.emoji||''}" placeholder="Type or paste an emoji" style="width:70px;font-size:18px;text-align:center;">
+      <div class="row" style="margin-bottom:0;">
+        <label class="small">Size</label><input type="range" id="gapSize${i}" min="40" max="220" value="${g.size}"><span class="range-val" id="gapSize${i}Val">${g.size}</span>
+        <label class="small">Round</label><input type="range" id="gapRadius${i}" min="0" max="50" value="${g.radius}"><span class="range-val" id="gapRadius${i}Val">${g.radius}</span>
       </div>
-      <div class="chip-row chip-row-wrap" style="margin-bottom:4px;">
-        ${quickEmojis.map(em=>`<button class="chip gapEmojiPick-chip" data-em="${em}">${em}</button>`).join('')}
-      </div>
-    </div>
-    <div class="gap-image-only" id="gapImageOnly${i}" style="${isEmoji?'display:none;':''}">
-      <div class="gap-pair-row" style="margin-bottom:6px;">
-        <div class="field"><label>Width</label><input type="range" id="gapWidth${i}" min="30" max="100" value="${g.widthPct!=null?g.widthPct:100}"><span class="range-val" id="gapWidth${i}Val">${g.widthPct!=null?g.widthPct:100}</span></div>
-        <div class="field"><label>Height</label><input type="range" id="gapHeight${i}" min="30" max="100" value="${g.heightPct!=null?g.heightPct:100}"><span class="range-val" id="gapHeight${i}Val">${g.heightPct!=null?g.heightPct:100}</span></div>
-      </div>
-      <div class="gap-pair-row" style="margin-bottom:6px;">
-        <div class="field"><label>↔</label><input type="range" id="gapPosX${i}" min="0" max="100" value="${g.posX!=null?g.posX:50}"><span class="range-val" id="gapPosX${i}Val">${g.posX!=null?g.posX:50}</span></div>
-        <div class="field"><label>↕</label><input type="range" id="gapPosY${i}" min="0" max="100" value="${g.posY!=null?g.posY:50}"><span class="range-val" id="gapPosY${i}Val">${g.posY!=null?g.posY:50}</span></div>
-      </div>
-      <div class="gap-pair-row">
-        <div class="field"><label>Round</label><input type="range" id="gapRadius${i}" min="0" max="50" value="${g.radius}"><span class="range-val" id="gapRadius${i}Val">${g.radius}</span></div>
-        <div class="field"><label>Border</label><input type="range" id="gapBorderW${i}" min="0" max="10" value="${g.borderW}"><span class="range-val" id="gapBorderW${i}Val">${g.borderW}</span></div>
+      <div class="row" style="margin-bottom:0;">
+        <label class="small">Height</label><input type="range" id="gapHeight${i}" min="30" max="100" value="${g.heightPct!=null?g.heightPct:100}"><span class="range-val" id="gapHeight${i}Val">${g.heightPct!=null?g.heightPct:100}</span>
+        <label class="small">Border</label><input type="range" id="gapBorderW${i}" min="0" max="10" value="${g.borderW}"><span class="range-val" id="gapBorderW${i}Val">${g.borderW}</span>
         <input type="color" id="gapBorderColor${i}" value="${g.borderColor}">
-      </div>
-    </div>`;
-  row.querySelector('#gapBtn'+i).onclick = ()=> row.querySelector('#gapInput'+i).click();
-  row.querySelector('#gapInput'+i).onchange = e=>{
-    const f = e.target.files[0]; if(!f) return;
-    const reader = new FileReader();
-    reader.onload = ev=>{
-      itState.gaps[i].img = ev.target.result;
-      const t = document.getElementById('thumb'+i);
-      if(t){ t.style.backgroundImage = `url(${ev.target.result})`; t.style.backgroundSize='cover'; }
-      renderImgText();
-      pushHistory();
+      </div>`;
+    row.querySelector('#gapBtn'+i).onclick = ()=> row.querySelector('#gapInput'+i).click();
+    row.querySelector('#gapInput'+i).onchange = e=>{
+      const f = e.target.files[0]; if(!f) return;
+      const reader = new FileReader();
+      reader.onload = ev=>{
+        itState.gaps[i].img = ev.target.result;
+        document.getElementById('thumb'+i).style.backgroundImage = `url(${ev.target.result})`;
+        renderImgText();
+        pushHistory();
+      };
+      reader.readAsDataURL(f);
     };
-    reader.readAsDataURL(f);
-  };
-  row.querySelectorAll('.gapType-chip').forEach(btn=>{
-    btn.onclick = ()=>{
-      itState.gaps[i].type = btn.dataset.v;
-      buildGapList(flattenWords(itState.text));
-      renderImgText();
-      pushHistory();
-    };
+    row.querySelector('#gapSize'+i).oninput = e=>{ itState.gaps[i].size = parseInt(e.target.value); document.getElementById('gapSize'+i+'Val').textContent=e.target.value; renderImgText(); };
+    row.querySelector('#gapRadius'+i).oninput = e=>{ itState.gaps[i].radius = parseInt(e.target.value); document.getElementById('gapRadius'+i+'Val').textContent=e.target.value; renderImgText(); };
+    row.querySelector('#gapHeight'+i).oninput = e=>{ itState.gaps[i].heightPct = parseInt(e.target.value); document.getElementById('gapHeight'+i+'Val').textContent=e.target.value; renderImgText(); };
+    row.querySelector('#gapBorderW'+i).oninput = e=>{ itState.gaps[i].borderW = parseInt(e.target.value); document.getElementById('gapBorderW'+i+'Val').textContent=e.target.value; renderImgText(); };
+    row.querySelector('#gapBorderColor'+i).oninput = e=>{ itState.gaps[i].borderColor = e.target.value; renderImgText(); };
+    list.appendChild(row);
   });
-  const emojiInput = row.querySelector('#gapEmoji'+i);
-  if(emojiInput){
-    emojiInput.addEventListener('input', e=>{
-      itState.gaps[i].emoji = e.target.value;
-      const t = document.getElementById('thumb'+i);
-      if(t) t.textContent = e.target.value;
-      renderImgText();
-      debouncedPushHistory();
-    });
-  }
-  row.querySelectorAll('.gapEmojiPick-chip').forEach(btn=>{
-    btn.onclick = ()=>{
-      itState.gaps[i].emoji = btn.dataset.em;
-      const inp = document.getElementById('gapEmoji'+i);
-      if(inp) inp.value = btn.dataset.em;
-      const t = document.getElementById('thumb'+i);
-      if(t) t.textContent = btn.dataset.em;
-      renderImgText();
-      pushHistory();
-    };
-  });
-  row.querySelector('#gapSize'+i).oninput = e=>{ itState.gaps[i].size = parseInt(e.target.value); document.getElementById('gapSize'+i+'Val').textContent=e.target.value; renderImgText(); };
-  row.querySelector('#gapWidth'+i).oninput = e=>{ itState.gaps[i].widthPct = parseInt(e.target.value); document.getElementById('gapWidth'+i+'Val').textContent=e.target.value; renderImgText(); };
-  row.querySelector('#gapPosX'+i).oninput = e=>{ itState.gaps[i].posX = parseInt(e.target.value); document.getElementById('gapPosX'+i+'Val').textContent=e.target.value; renderImgText(); };
-  row.querySelector('#gapPosY'+i).oninput = e=>{ itState.gaps[i].posY = parseInt(e.target.value); document.getElementById('gapPosY'+i+'Val').textContent=e.target.value; renderImgText(); };
-  row.querySelector('#gapRadius'+i).oninput = e=>{ itState.gaps[i].radius = parseInt(e.target.value); document.getElementById('gapRadius'+i+'Val').textContent=e.target.value; renderImgText(); };
-  row.querySelector('#gapHeight'+i).oninput = e=>{ itState.gaps[i].heightPct = parseInt(e.target.value); document.getElementById('gapHeight'+i+'Val').textContent=e.target.value; renderImgText(); };
-  row.querySelector('#gapBorderW'+i).oninput = e=>{ itState.gaps[i].borderW = parseInt(e.target.value); document.getElementById('gapBorderW'+i+'Val').textContent=e.target.value; renderImgText(); };
-  row.querySelector('#gapBorderColor'+i).oninput = e=>{ itState.gaps[i].borderColor = e.target.value; renderImgText(); };
-  editorEl.appendChild(row);
 }
 
 function renderImgText(){
@@ -1715,43 +1377,25 @@ function renderImgText(){
       if(itState.font && itState.font!=='auto'){ wSpan.style.fontFamily = itState.font; }
       wrap.appendChild(wSpan);
       const g = itState.gaps[wordIndex];
-      if(g && g.type==='emoji' && g.emoji){
-        const h = (parseInt(itState.size)*(g.size/100))*scale;
-        const box = document.createElement('div');
-        box.style.display='inline-flex';
-        box.style.flex='none';
-        box.style.alignItems='center';
-        box.style.justifyContent='center';
-        box.style.verticalAlign='middle';
-        box.style.height = h+'px';
-        box.style.lineHeight = h+'px';
-        box.style.fontSize = h+'px';
-        box.style.borderRadius = (g.radius*scale)+'px';
-        box.textContent = g.emoji;
-        wrap.appendChild(box);
-      } else if(g && g.type!=='emoji' && g.img){
+      if(g && g.img){
         const h = (parseInt(itState.size)*(g.size/100))*scale;
         const heightPct = (g.heightPct!=null ? g.heightPct : 100)/100;
-        const widthPct = (g.widthPct!=null ? g.widthPct : 100)/100;
         const visH = h*heightPct;
-        const visW = h*widthPct;
         const box = document.createElement('div');
         box.style.display='inline-flex';
         box.style.flex='none';
         box.style.alignItems='center';
         box.style.justifyContent='center';
         box.style.verticalAlign='middle';
-        box.style.width = visW+'px';
         box.style.height = visH+'px';
         box.style.overflow='hidden';
         box.style.borderRadius = (g.radius*scale)+'px';
         box.style.border = g.borderW>0 ? `${g.borderW*scale}px solid ${g.borderColor}` : 'none';
         const im = document.createElement('img');
         im.src = g.img;
-        im.style.width='100%';
-        im.style.height='100%';
-        im.style.objectFit='cover';
-        im.style.objectPosition = (g.posX!=null?g.posX:50)+'% '+(g.posY!=null?g.posY:50)+'%';
+        im.style.height = h+'px';
+        im.style.width='auto';
+        im.style.maxWidth='none';
         im.style.flex='none';
         im.style.display='block';
         if(isFillAuto && !im.complete){
@@ -1782,255 +1426,99 @@ function renderImgText(){
 const expStatus = document.getElementById('expStatus');
 function setStatus(s){ expStatus.textContent = s; }
 
-// Robust "download" helper. In-app browsers (Zalo, Facebook, Messenger, etc.)
-// often silently swallow the <a download> click — no error, nothing saved.
-// Strategy: try the Web Share API first (works well on mobile and lets the
-// user save straight to their photo library); if that's unavailable/fails,
-// fall back to the normal <a download> click; if the user is in a webview
-// that still blocks it, also open the file in a new tab so they can long-press
-// "Save image" manually as a last resort.
-async function downloadFile(blob, filename, mime){
-  // 1) Try native share sheet (best experience on mobile, bypasses webview download blocks)
-  try{
-    if (navigator.canShare && navigator.share) {
-      const file = new File([blob], filename, {type: mime});
-      if (navigator.canShare({files:[file]})) {
-        await navigator.share({files:[file], title: filename});
-        return true;
-      }
-    }
-  }catch(err){ /* user cancelled share or share failed — fall through to download */ }
-
-  // 2) Normal download link
-  const url = URL.createObjectURL(blob);
-  try{
-    const a = document.createElement('a');
-    a.download = filename;
-    a.href = url;
-    a.rel = 'noopener';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  }catch(err){}
-
-  // 3) Fallback: open in a new tab so the user can long-press to save,
-  // in case the webview silently blocked the download click above.
-  setTimeout(()=>{
-    try{ window.open(url, '_blank'); }catch(err){}
-  }, 300);
-
-  return true;
-}
-
-function dataUrlToBlob(dataUrl){
-  const parts = dataUrl.split(',');
-  const mimeMatch = parts[0].match(/:(.*?);/);
-  const mime = mimeMatch ? mimeMatch[1] : 'image/png';
-  const bin = atob(parts[1]);
-  const arr = new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++){ arr[i] = bin.charCodeAt(i); }
-  return new Blob([arr], {type: mime});
-}
-
-
 function nextFrame(){ return new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))); }
-async function captureCanvas(forceNoBg){
-  if(typeof html2canvas === 'undefined'){
-    throw new Error('Export library did not load (check your internet connection) — please try again.');
-  }
+async function captureCanvas(forceNoBg=false){
+  if(typeof html2canvas !== 'function') throw new Error('html2canvas is unavailable');
   const hasBg = hasBackground() && !forceNoBg;
-  let prevImg, prevColor;
-  if(!hasBg){
-    prevImg = bgLayer.style.backgroundImage; prevColor = bgLayer.style.backgroundColor;
-    bgLayer.style.backgroundImage='none'; bgLayer.style.backgroundColor='transparent';
-    stage.style.backgroundImage='none'; stage.style.backgroundColor='transparent';
-  }
-
-  // Lock the stage to its EXACT current pixel size before capture.
-  // Without this, html2canvas clones the page into a hidden iframe to render it,
-  // and responsive units on .stage (aspect-ratio set dynamically in JS, max-height:60vh,
-  // max-width:86%) can resolve to a different box size inside that clone than what is
-  // shown on screen — which is what produces the cropped/zoomed export.
-  // Forcing fixed inline px dimensions removes that ambiguity entirely.
-  const rect = stage.getBoundingClientRect();
-  const fixedW = Math.round(rect.width);
-  const fixedH = Math.round(rect.height);
-  const prevInline = {
-    width: stage.style.width, height: stage.style.height,
-    maxWidth: stage.style.maxWidth, maxHeight: stage.style.maxHeight,
-    aspectRatio: stage.style.aspectRatio
-  };
-  stage.style.width = fixedW + 'px';
-  stage.style.height = fixedH + 'px';
-  stage.style.maxWidth = 'none';
-  stage.style.maxHeight = 'none';
-  stage.style.aspectRatio = 'auto';
-
-  // Hide the stage's decorative white frame (border:6px solid #fff) during
-  // capture — otherwise it gets baked into the exported image as an
-  // unwanted white border. Restore it right after.
-  const prevBorder = stage.style.border;
-  const prevBoxShadow = stage.style.boxShadow;
-  const prevBorderRadius = stage.style.borderRadius;
-  stage.style.border = 'none';
-  stage.style.boxShadow = 'none';
-  stage.style.borderRadius = '0';
-
-  await nextFrame();
-  let scale = 2;
-  if(hasBg && imgNaturalW && fixedW > 0){
-    const computed = imgNaturalW / fixedW;
-    if(isFinite(computed) && computed > 0){ scale = Math.min(Math.max(computed, 0.5), 6); }
-  }
-  let canvas;
-  try{
-    canvas = await html2canvas(stage, {backgroundColor:null, useCORS:true, scale, width:fixedW, height:fixedH, windowWidth:fixedW, windowHeight:fixedH});
-  }catch(err){
-    canvas = await html2canvas(stage, {backgroundColor:null, useCORS:true, scale:2, width:fixedW, height:fixedH, windowWidth:fixedW, windowHeight:fixedH});
-  }
-
-  // restore
-  stage.style.border = prevBorder;
-  stage.style.boxShadow = prevBoxShadow;
-  stage.style.borderRadius = prevBorderRadius;
-  stage.style.width = prevInline.width;
-  stage.style.height = prevInline.height;
-  stage.style.maxWidth = prevInline.maxWidth;
-  stage.style.maxHeight = prevInline.maxHeight;
-  stage.style.aspectRatio = prevInline.aspectRatio;
-
-  if(!hasBg){
-    bgLayer.style.backgroundImage=prevImg||''; bgLayer.style.backgroundColor=prevColor||'';
-    stage.style.backgroundImage=''; stage.style.backgroundColor='';
-  }
-  return canvas;
-}
-// "Export Photo" — PNG is used because it's lossless (JPG's compression
-// blurs sharp text/edges and can't have transparency), so it's simply the
-// better default; no need to make the person choose between two formats.
-document.getElementById('expPng').onclick = async ()=>{
-  setStatus('Exporting photo...');
-  try{
-    const c = await captureCanvas();
-    await downloadFile(dataUrlToBlob(c.toDataURL('image/png')), 'neonmoon.png', 'image/png');
-    setStatus('Done! Photo downloaded.');
-  }catch(err){ setStatus('Export failed, please try again.'); }
-};
-document.getElementById('expTransparent').onclick = async ()=>{
-  setStatus('Exporting transparent PNG...');
-  try{
-    const c = await captureCanvas(true);
-    await downloadFile(dataUrlToBlob(c.toDataURL('image/png')), 'neonmoon-transparent.png', 'image/png');
-    setStatus('Done! Transparent PNG downloaded.');
-  }catch(err){ setStatus('Export failed, please try again.'); }
-};
-
-// gif.js draws each frame onto its internal canvas with a plain
-// drawImage(image, 0, 0) — i.e. NO scaling. If a captured frame's pixel
-// size doesn't exactly match the GIF's declared width/height, the extra
-// area is simply cropped off (this is what caused the "cropped GIF" bug).
-// This helper resizes any canvas onto a new canvas of the exact target size.
-function toFixedSizeCanvas(srcCanvas, targetW, targetH){
-  if(srcCanvas.width === targetW && srcCanvas.height === targetH) return srcCanvas;
-  const out = document.createElement('canvas');
-  out.width = targetW; out.height = targetH;
-  const ctx = out.getContext('2d');
-  ctx.drawImage(srcCanvas, 0, 0, srcCanvas.width, srcCanvas.height, 0, 0, targetW, targetH);
-  return out;
-}
-
-// Video export: unlike GIF, a video file plays as real motion in the iOS
-// Photos app (and everywhere else), so this is the format to reach for
-// when the GIF "doesn't move" after saving to the album.
-async function captureFrameSequence(){
-  const frames = 14;
-  const captured = [];
-  for(let i=0;i<frames;i++){
-    captured.push(await captureCanvas());
-    await new Promise(r=>setTimeout(r,90));
-  }
-  return captured;
-}
-
-async function renderMotionGif(){
-  const captured = await captureFrameSequence();
-  // Use the actual pixel size of the first captured frame as the GIF's
-  // declared size, then normalize every frame to match it exactly.
-  const gifW = captured[0].width, gifH = captured[0].height;
-  const gif = new GIF({workers:2, quality:10, width:gifW, height:gifH, workerScript:__gifWorkerBlobUrl()});
-  captured.forEach(c=>{
-    gif.addFrame(toFixedSizeCanvas(c, gifW, gifH), {delay:110});
-  });
-  return new Promise((resolve,reject)=>{
-    gif.on('finished', blob=>resolve(blob));
-    try{ gif.render(); }catch(err){ reject(err); }
-  });
-}
-
-async function renderMotionVideo(){
-  if(typeof MediaRecorder === 'undefined'){
-    throw new Error('This browser cannot record video.');
-  }
-  const captured = await captureFrameSequence();
-  const w = captured[0].width, h = captured[0].height;
-  const out = document.createElement('canvas');
-  out.width = w; out.height = h;
-  const ctx = out.getContext('2d');
-  ctx.drawImage(toFixedSizeCanvas(captured[0], w, h), 0, 0);
-
-  const stream = out.captureStream ? out.captureStream(10) : null;
-  if(!stream) throw new Error('This browser cannot capture a canvas stream.');
-
-  const mimeCandidates = ['video/mp4', 'video/webm;codecs=vp9', 'video/webm'];
-  const mimeType = mimeCandidates.find(m => MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(m));
-  if(!mimeType) throw new Error('No supported video format found.');
-
-  const recorder = new MediaRecorder(stream, {mimeType});
-  const chunks = [];
-  recorder.ondataavailable = e => { if(e.data && e.data.size) chunks.push(e.data); };
-
-  const done = new Promise(resolve => { recorder.onstop = resolve; });
-  recorder.start();
-
-  // Loop through the captured frames a couple of times so the video isn't
-  // instant, drawing each one for ~110ms to match the GIF's timing.
-  const loops = 2;
-  for(let l=0;l<loops;l++){
-    for(const frame of captured){
-      ctx.drawImage(toFixedSizeCanvas(frame, w, h), 0, 0);
-      await new Promise(r=>setTimeout(r,110));
+  const old = {bgImage:bgLayer.style.backgroundImage,bgColor:bgLayer.style.backgroundColor,stageImage:stage.style.backgroundImage,stageColor:stage.style.backgroundColor};
+  try {
+    if(!hasBg){
+      bgLayer.style.backgroundImage='none'; bgLayer.style.backgroundColor='transparent';
+      stage.style.backgroundImage='none'; stage.style.backgroundColor='transparent';
     }
+    await document.fonts?.ready;
+    await nextFrame();
+    let scale=2;
+    if(hasBg && imgNaturalW && stage.clientWidth>0){
+      const ratio=imgNaturalW/stage.clientWidth;
+      if(Number.isFinite(ratio)&&ratio>0) scale=Math.min(Math.max(ratio,0.5),6);
+    }
+    const c=await html2canvas(stage,{backgroundColor:null,useCORS:true,allowTaint:false,scale,logging:false,imageTimeout:15000});
+    if(!c.width||!c.height) throw new Error('Captured canvas is empty');
+    return c;
+  } finally {
+    bgLayer.style.backgroundImage=old.bgImage; bgLayer.style.backgroundColor=old.bgColor;
+    stage.style.backgroundImage=old.stageImage; stage.style.backgroundColor=old.stageColor;
   }
-  recorder.stop();
-  await done;
-  return {blob: new Blob(chunks, {type: mimeType}), mimeType};
 }
-
-document.getElementById('expGif').onclick = async ()=>{
-  setStatus('Rendering motion GIF...');
+function canvasBlob(canvas,type,quality){
+  return new Promise((resolve,reject)=>{
+    try {canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('Canvas could not be encoded (possibly a cross-origin image)')),type,quality);}
+    catch(e){reject(e);}
+  });
+}
+function saveBlob(blob,filename){
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename;
+  a.style.display='none'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+function exportError(err){console.error('NeonMoon export failed:',err);setStatus('Export failed: '+(err?.message||String(err)));}
+async function exportStill(filename,type,transparent=false){
+  exportMenu.classList.remove('open'); setStatus('Exporting '+filename+'...');
   try{
-    const blob = await renderMotionGif();
-    await downloadFile(blob, 'neonmoon-motion.gif', 'image/gif');
-    setStatus('Done! Motion GIF downloaded.');
-  }catch(err){ setStatus('GIF render failed, please try again.'); }
-};
-
-document.getElementById('expVideo').onclick = async ()=>{
-  setStatus('Rendering video...');
+    const canvas=await captureCanvas(transparent);
+    if(type==='image/jpeg'){
+      const flat=document.createElement('canvas');flat.width=canvas.width;flat.height=canvas.height;
+      const ctx=flat.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,flat.width,flat.height);ctx.drawImage(canvas,0,0);
+      saveBlob(await canvasBlob(flat,type,0.92),filename);
+    } else saveBlob(await canvasBlob(canvas,type),filename);
+    setStatus('Downloaded '+filename);
+  }catch(err){exportError(err);}
+}
+document.getElementById('expPng').onclick=()=>exportStill('neonmoon.png','image/png');
+document.getElementById('expTransparent').onclick=()=>exportStill('neonmoon-transparent.png','image/png',true);
+document.getElementById('expJpg').onclick=()=>exportStill('neonmoon.jpg','image/jpeg');
+function makeGif(width,height){
+  if(typeof GIF!=='function') throw new Error('GIF encoder is unavailable');
+  return new GIF({workers:2,quality:10,width,height,workerScript:__gifWorkerBlobUrl()});
+}
+function addGifFrame(gif,canvas,delay){
+  const frame=document.createElement('canvas');frame.width=gif.options.width;frame.height=gif.options.height;
+  frame.getContext('2d').drawImage(canvas,0,0,frame.width,frame.height);
+  gif.addFrame(frame,{delay,copy:true});
+}
+function finishGif(gif,filename){
+  return new Promise((resolve,reject)=>{
+    gif.on('finished',blob=>{saveBlob(blob,filename);resolve();});
+    gif.on('abort',()=>reject(new Error('GIF encoding aborted')));
+    gif.render();
+  });
+}
+document.getElementById('expGif').onclick=async()=>{
+  exportMenu.classList.remove('open');setStatus('Rendering motion GIF...');
   try{
-    const {blob, mimeType} = await renderMotionVideo();
-    const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
-    await downloadFile(blob, 'neonmoon-motion.'+ext, mimeType);
-    setStatus('Done! Video downloaded — this one plays as real motion in Photos.');
-  }catch(err){
-    setStatus('Video export not supported on this browser — try Motion GIF instead.');
-  }
+    const first=await captureCanvas();const gif=makeGif(first.width,first.height);
+    addGifFrame(gif,first,110);
+    for(let i=1;i<14;i++){
+      await new Promise(r=>setTimeout(r,90));
+      addGifFrame(gif,await captureCanvas(),110);
+    }
+    await finishGif(gif,'neonmoon-motion.gif');setStatus('Motion GIF downloaded.');
+  }catch(err){exportError(err);}
 };
-
-// "Live Photo" export was removed: browsers cannot produce a real Apple
-// Live Photo (that's a paired HEIC image + MOV video, assembled by iOS),
-// so it was just re-labeling this same Motion GIF — no real difference,
-// which is why it looked identical and didn't add anything.
+let beforeSnapshot=null;
+document.getElementById('expBA').onclick=async()=>{
+  exportMenu.classList.remove('open');
+  try{
+    if(!beforeSnapshot){beforeSnapshot=await captureCanvas();setStatus('Before saved. Edit your image, then export again.');return;}
+    setStatus('Building Before→After GIF...');
+    const after=await captureCanvas();const gif=makeGif(after.width,after.height);
+    addGifFrame(gif,beforeSnapshot,900);addGifFrame(gif,after,900);
+    await finishGif(gif,'neonmoon-before-after.gif');beforeSnapshot=null;
+    setStatus('Before→After GIF downloaded.');
+  }catch(err){exportError(err);}
+};
 
 // ---- UNDO / REDO ----
 let historyStack = [];
@@ -2121,6 +1609,22 @@ pushHistory();
 }catch(err){
   showDebugError('App init error: ' + (err && (err.stack || err.message) || err));
 }
+</script>
+<script>
+// Preview-only zoom. The image export continues to use the unzoomed canvas.
+(function(){
+ const stageEl=document.getElementById('stage');
+ const zoomLabel=document.getElementById('viewZoomLabel');
+ let zoom=1;
+ function setZoom(v){zoom=Math.max(.5,Math.min(2.5,v));stageEl.style.setProperty('--view-zoom',zoom);zoomLabel.textContent=Math.round(zoom*100)+'%';}
+ document.getElementById('viewMinus').addEventListener('click',()=>setZoom(zoom-.15));
+ document.getElementById('viewPlus').addEventListener('click',()=>setZoom(zoom+.15));
+ document.getElementById('viewFit').addEventListener('click',()=>setZoom(1));
+ let distance=0,initial=1;
+ stageEl.addEventListener('touchstart',e=>{if(e.touches.length===2){distance=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);initial=zoom;}},{passive:true});
+ stageEl.addEventListener('touchmove',e=>{if(e.touches.length===2&&distance){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);setZoom(initial*d/distance);}},{passive:true});
+ stageEl.addEventListener('touchend',e=>{if(e.touches.length<2)distance=0;},{passive:true});
+})();
 </script>
 </body>
 </html>
